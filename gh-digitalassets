@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# set -e
+#set -e
+
+
 
 # echo "Hello gh-digitalassets!"
 import argparse
@@ -72,8 +74,8 @@ def interactiveBuilding():
     metaData["description"] = description
     topic_inp = topic_writing()
     topics = topic_inp
-
-    var = any(tag in ensTopicList for tag in topics)
+    print(topics)
+    var = any(tag in topics for tag in ensTopicList)
     print(var)
     if(not var):
         return("Please provide a topic acoording to the ENS standards", 0)
@@ -204,18 +206,21 @@ def metadata():
             if(resp == 'Y'):
                 uploadFile, flag = interactiveBuilding()
                 if(not flag):
-                    print(uploadFile)
+                    return(uploadFile, 0)
                 else:
                     gitUpload(uploadFile, metadata.json)
+                    return('success', 1)
+
         else:
             with open(args.filepath + 'metadata.json') as file:
                 fileContent = file.read()
             var, flag = metaDataParser(fileContent)
 
             if(flag == 0):
-                return(var)
+                return(var, 0)
             else:
                 gitUpload(str(var), 'metadata.json')
+                return('success', 1)
 
 
     else:
@@ -227,28 +232,30 @@ def metadata():
             resp = input()
             if(resp == 'Y'):
                 uploadFile, flag = interactiveBuilding()
-                if(not flag):
-                    print(uploadFile)
+                if(flag == 0):
+                    return(uploadFile, 0)
                 else:
                     gitUpload(uploadFile, 'metadata.json')
+                    return('success', 1)
         else:
             with open(cwd + 'metadata.json') as file:
                 fileContent = file.read()
             var, flag = metaDataParser(fileContent)
 
             if(flag == 0):
-                return(var)
+                return(var, 0)
             else:
                 gitUpload(str(var), 'metadata.json')
+                return('success', 1)
 
 
-def data():
+def dataFile():
     if(args.filepath):
         file_list = os.listdir(args.filepath)
         if(not args.updateFile):
             
             if(len(file_list) == 0):
-                return('The folder is empty. Please have your data file in the directory')
+                return('The folder is empty. Please have your data file in the directory', 0)
             if('.DS_Store' in file_list):
                 file_list.remove('.DS_Store')
             if('metadata.json' in file_list):
@@ -261,17 +268,22 @@ def data():
                         fileContent = file.read()
                     base64_content = base64.b64encode(fileContent).decode('utf-8')
                     updateFile = file_list[files]
-                    gitUpload_data(fileContent, updateFile)
+                    try:
+                        gitUpload_data(fileContent, updateFile)
+                        return('success', 1)
+                    except:
+                        print("exception in git upload")
             else:
-                return("No data file present")
+                return("No data file present", 0)
         else:
             if(args.updateFile not in file_list):
-                return("Data file does not exist")
+                return("Data file does not exist", 0)
             with open(args.filepath + args.updateFile, 'rb') as file:
                 fileContent = file.read()
             base64_content = base64.b64encode(fileContent).decode('utf-8') 
             updateFile = args.updateFile
             gitUpload_data(fileContent, updateFile)
+            return('success', 1)
 
     else:
         cwd = os.getcwd()
@@ -280,7 +292,7 @@ def data():
         if(not args.updateFile):
             
             if(len(file_list) == 0):
-                return('The folder is empty. Please have your data file in the directory')
+                return('The folder is empty. Please have your data file in the directory', 0)
             if('.DS_Store' in file_list):
                 file_list.remove('.DS_Store')
             if('metadata.json' in file_list):
@@ -294,16 +306,18 @@ def data():
                     base64_content = base64.b64encode(fileContent).decode('utf-8')
                     updateFile = file_list[files]
                     gitUpload_data(fileContent, updateFile)
+                    return('success', 1)
             else:
-                return("No data file present")
+                return("No data file present", 0)
         else:
             if(args.updateFile not in file_list):
-                return("Data file does not exist")
+                return("Data file does not exist", 0)
             with open(cwd + args.updateFile, 'rb') as file:
                 fileContent = file.read()
             base64_content = base64.b64encode(fileContent).decode('utf-8') 
             updateFile = args.updateFile
             gitUpload_data(fileContent, updateFile)
+            return('success', 1)
 
 
 ##########################################################################
@@ -542,6 +556,8 @@ def expandRepo(reponame):
 def searchfiles(repoN,filename):
     newRepo = getRepo(repoN)
     contents = newRepo.get_contents("")
+    exactlist = []
+    partiallist = []
     while contents:
         check = True
         newContent = contents.pop(0)
@@ -549,16 +565,36 @@ def searchfiles(repoN,filename):
             contents.extend(newRepo.get_contents(newContent.path))
         else:
             if newContent.name == filename and newContent.type != 'dir':
-                response = request.get(newContent.download_url, allow_redirects=True)
-                open(newContent.name,'wb').write(response.content)
-                print("Download Successful :" + newContent.name)
+                exactlist.append(newContent)
+                # response = request.get(newContent.download_url, allow_redirects=True)
+                # open(newContent.name,'wb').write(response.content)
+                # print("Download Successful :" + newContent.name)
+                # sys.exit()
             elif fuzz.partial_ratio(newContent.name.lower(), filename.lower()) >= 80 and newContent.type != 'dir':
-                response = request.get(newContent.download_url, allow_redirects=True)
-                open(newContent.name,'wb').write(response.content)
-                print("Download Successful :" + newContent.name)
-            else :
-                check = False
-    if check == True:
+                partiallist.append(newContent)
+                # response = request.get(newContent.download_url, allow_redirects=True)
+                # open(newContent.name,'wb').write(response.content)
+                # print("Download Successful :" + newContent.name)
+    if(len(exactlist) == 1):
+        download_files(exactlist[0])
+    elif(len(exactlist) > 1):
+        questions = [
+                {
+                    'type' : 'list',
+                    'name' : 'dFile',
+                    'message' : 'Select a file to download',
+                    'choices' : [x.path for x in exactlist],
+                    'filter' : lambda option : option
+                    }
+                ]
+        result = prompt(questions)
+        for each in exactlist:
+           if result['dFile'] == each.path:
+                    download_files(each)
+    if(len(exactlist) == 0 and len(partiallist) > 0):
+        for each in partiallist:
+            download_files(each)
+    elif(len(exactlist) == 0 and len(partiallist) == 0):
         print("No file found")
 
 
@@ -613,14 +649,14 @@ def search(input,value):
    get_github_data(topics, input, value)
 
 def github_read_file_str(username, repository_name, github_token=None):
-    headers = {}
+    headers = {}  
     if github_token:
         headers['Authorization'] = f"token {github_token}"
         
     try:
         url = f'https://api.github.com/repos/{username}/{repository_name}/contents/digital-asset-metadata.json'
         r = request.get(url, headers={
-    'Authorization': 'Bearer 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',
+    'Authorization': 'Bearer '+token,
     'Accept': 'application/vnd.github+json'})
         r.raise_for_status()
         data = r.json()
@@ -634,6 +670,8 @@ def github_read_file_str(username, repository_name, github_token=None):
 
 def populate_data(data_json,keyword):
     count = 0
+   #  print(data_json)
+    done = []
     for i in range(0,len(data_json['items'])):
 
         owner = data_json['items'][i]['owner']['login']
@@ -641,12 +679,15 @@ def populate_data(data_json,keyword):
         url = data_json['items'][i]['html_url']
 
         file_content = github_read_file_str(owner,name)
-        
+
+       
         for k in keyword:
-            if k.lower() in file_content.lower():
+            if (k.lower() in file_content.lower()) and (url not in done):
+                done.append(url)
                 count += 1
                 print(count)
                 print('Name: ' + name,'\nLink: ' + url, '\nUploaded By: ' + owner + '\n')
+         
 
 def repo_name_search(name):
    url_2 = "https://api.github.com/search/repositories?q="+name+" in:name topic:ens-asset"
@@ -678,8 +719,8 @@ def keyword_search(keywords):
    url = 'https://api.github.com/search/repositories?q=topic:ens-asset&per_page=100&page=1'
 
    data = request.get(url,headers={
-      'Authorization': 'Bearer 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',
-      'Accept': 'application/vnd.github+json'})
+         'Authorization': 'Bearer '+token,
+         'Accept': 'application/vnd.github+json'})
    data_json  = data.json()
 
    headers = data.headers
@@ -698,7 +739,7 @@ def keyword_search(keywords):
 
    while(iterate):
       data = request.get(url,headers={
-         'Authorization': 'Bearer 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',
+         'Authorization': 'Bearer '+token,
          'Accept': 'application/vnd.github+json'})
       # data_json  = data.json()
       
@@ -713,32 +754,35 @@ def keyword_search(keywords):
                iterate = False
       else:
          iterate = False
-		 
-		 
+         
+         
 ######################################################################################
 def main():
-    if args.command == "update-file":
+    ################## update related code #######################
+    if args.command == "updateFile":
         print("\n####################### Update File ##########################\n")
 
-        if(args.type == 'metadata'):
-            imp = metadata()
-            if(type(imp) == str):
+        if(args.updateType == 'metadata'):
+            imp, flag = metadata()
+            if(flag == 0):
                 print(imp)
 
-        elif(args.type == 'data'):
-            imp = data()
-            if(type(imp) == str):
+        elif(args.updateType == 'data'):
+            imp, flag = dataFile()
+            if(flag == 0):
                 print(imp)
         
-        elif(args.type == 'both'):
-            imp = metadata()
-            imp1 = data()
-            if(type(imp) == str):
-                print(imp)
-            if(type(imp1) == str):
+        elif(args.updateType == 'both'):
+            imp1, flag1 = dataFile()
+            if(flag1 == 0):
                 print(imp1)
+                sys.exit()
+            imp, flag = metadata()   
+            if(flag == 0):
+                print(imp)
+            
         else:
-            return("Invalid input")
+            print("Invalid input")
 
     ##############################################
     ## Create related code ##
@@ -873,7 +917,7 @@ def main():
         print("Cloning a repo")
 
     elif args.command == "downloadRepo":
-        repo = args.repoName
+        repo = args.reponame
         questions = [
             {
             'type' : 'list',
@@ -895,7 +939,7 @@ def main():
 
     elif args.command == "downloadFile": 
         filename = args.fileName
-        repoN = args.repoName
+        repoN = args.reponame
         if(filename):
             searchfiles(repoN,filename)
         else:
@@ -906,17 +950,17 @@ def main():
                     'type' : 'list',
                     'name' : 'dFile',
                     'message' : 'Select a file to download',
-                    'choices' : [x.name for x in contents],
+                    'choices' : [x.path for x in contents],
                     'filter' : lambda option : option
                     }
                 ]
             result = prompt(questions)
             for each in contents:
-                if result['dFile'] == each.name:
+                if result['dFile'] == each.path:
                     download_files(each)
 
     elif args.command == "listContents":
-        newName = args.repoName
+        newName = args.reponame
         try:
             contents = expandRepo(newName)
             print("File contents of "+ newName)
@@ -927,7 +971,7 @@ def main():
 
      
     elif args.command == "readMetadata":
-        repo = getRepo(args.repoName)
+        repo = getRepo(args.reponame)
         try:
             content = repo.get_contents("metadata.json")
             contentData = content.decoded_content
@@ -951,10 +995,10 @@ def main():
 
 
     elif args.command == 'deleteFile':
-        repo = getRepo(args.repoName)
+        repo = getRepo(args.reponame)
         check = False
         try:
-            contents = expandRepo(args.repoName)
+            contents = expandRepo(args.reponame)
             for each in contents:
                 if each.name == args.fileName:
                     repo.delete_file(each.path, args.fileName + " Deleted",each.sha, branch = 'main')
@@ -973,7 +1017,7 @@ def main():
         except github.GithubException as e:
             print("Error Occured:", e)
             sys.exit()
-			
+            
     if args.command == "search":
         try:
             if args.name != None:
@@ -1000,13 +1044,16 @@ if __name__ == '__main__':
     subparser = parser.add_subparsers(dest='command',help="Testing help command")
 
     #reponame = subparser.add_parser("reponame")
-    update_repo = subparser.add_parser("update-file")
+    ############################################################
+    ## Update repo related commands
+    ############################################################
+    update_repo = subparser.add_parser("updateFile", help="Update your digital asset files")
 
-    update_repo.add_argument("--reponame", type = str, required = True)
-    update_repo.add_argument("--type", type = str, required = True)
+    update_repo.add_argument("--reponame", type = str, required = True, help="Give the name of the repo to be updated")
+    update_repo.add_argument("--updateType", type = str, required = True, help="Mention the type of the file to be updated i.e. meta-data or data")
     #update_repo.add_argument("--interactiveBuilding", type = str, required = True)
-    update_repo.add_argument("--updateFile", type = str, required = False)
-    update_repo.add_argument("--filepath", type = str, required = False)
+    update_repo.add_argument("--updateFile", type = str, required = False, help="Mention the name of the file which you want to update")
+    update_repo.add_argument("--filepath", type = str, required = False, help="Path of the directiry containing your metadata and data parts")
 
     ############################################################
     ## Create repo related commands
@@ -1029,20 +1076,20 @@ if __name__ == '__main__':
     readMetadata = subparser.add_parser('readMetadata', help = "Read the metadata file from the repo")
     deleteFile = subparser.add_parser('deleteFile' , help = "Delete a file from the repo. Requires repo name and file name")
 
-    clone.add_argument('--repoName', type = str, required = True, help = "Provide the name of the repo to clone")
-    downloadRepo.add_argument('--repoName', type = str, required = True, help = "Name of the repo")
+    clone.add_argument('--reponame', type = str, required = True, help = "Provide the name of the repo to clone")
+    downloadRepo.add_argument('--reponame', type = str, required = True, help = "Name of the repo")
     downloadFile.add_argument('--fileName', type = str, required = False, help = "File name to be downloaded")
-    readMetadata.add_argument('--repoName', type = str, required = True, help = "Name of the repo")
-    downloadFile.add_argument('--repoName', type = str, required = True, help = "Name of the repo")
-    listContents.add_argument('--repoName', type = str, required = True, help = "Name of the repo")
-    deleteFile.add_argument('--repoName',type = str, required = True, help = "Name of the repo")
+    readMetadata.add_argument('--reponame', type = str, required = True, help = "Name of the repo")
+    downloadFile.add_argument('--reponame', type = str, required = True, help = "Name of the repo")
+    listContents.add_argument('--reponame', type = str, required = True, help = "Name of the repo")
+    deleteFile.add_argument('--reponame',type = str, required = True, help = "Name of the repo")
     deleteFile.add_argument('--fileName',type = str, required = True, help = "Name of the file to be deleted")
-	
+    
     ############################################################
     ## Search repo related commands
     ############################################################
 
-    search_command = subparser.add_parser("search")
+    search_command = subparser.add_parser("search",help = "Search for digital assets using topics, name or keywords")
     search_command.add_argument("--name", type = str)
     search_command.add_argument("--topics", type = str)
     search_command.add_argument("--keywords", type = str)
@@ -1056,6 +1103,7 @@ if __name__ == '__main__':
         except GithubException as e:
             if e.status == 404:
                 print("Repository not found. Go ahead and create it")
+                sys.exit()
 
 
     #file_content = repo.get_contents(args.updateFile , ref = 'main')
