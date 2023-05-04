@@ -48,7 +48,7 @@ Creates a repo on GitHub by uploading the files specified. It is required for th
 - topics: list of topics to identify the type of the digital asset
 - associations: URLs of repos that are similar to the current digital asset. In future the tool will automatically populate this field with related URLs.
 
-## Constraints on the metadata file
+#### Constraints on the metadata file
 It must have all the keys as shown above and there must be one topic from the list below. If any of this is missing the tool will be able to interactively create it as we will see below.
 ```
 ❯ ens-machinelearning
@@ -81,7 +81,7 @@ Do you want all files in the current directory to be uploaded?  Press Y/N: Press
 ```
 Pressing N will not create any repo and changes can be made.
 
-### Sample create repo flow when path is given and the metadata.json has all the required fields.
+#### Sample create repo flow when path is given and the metadata.json has all the required fields.
 ```console
 >gh digitalassets createrepo --reponame testrepo3may1 --path C:\Users\ramnu\UploadDigitalAsset
 Repo created with name ramchandra-ub/testrepo3may1
@@ -91,7 +91,7 @@ All files in the specified directory uploaded
 ```
 It will create a repo and upload the files in the repo. It will also crawl through the metadata file and update the GitHub topics and description with the relevenat content.
 
-### Sample create repo flow when path is given and the metadata.json is not found
+#### Sample create repo flow when path is given and the metadata.json is not found
 The tool will be able to interactively create the metdata file as shown below.
 ```console
 >gh digitalassets createrepo --reponame testrepo3may2 --path C:\Users\ramnu\UploadDigitalAsset
