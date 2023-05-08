@@ -1103,7 +1103,7 @@ if __name__ == '__main__':
         except GithubException as e:
             if e.status == 404:
                 print("Repository not found. Go ahead and create it")
-                sys.exit()
+                ## sys.exit()
 
 
     #file_content = repo.get_contents(args.updateFile , ref = 'main')
