@@ -120,3 +120,33 @@ All files in the specified directory uploaded
 ```
 
 When the metadata.json file is present, but a few fields are missing the tool will be able to interactively create those missing fields and upload it to the repo and change the file locally.
+
+### Search
+
+Search for digital assets using name, topics and keywords
+
+#### Search by name
+
+Search by giving the name of the digital asset which will be same as the name of the repo
+
+```
+gh digitalassets --search reponame
+
+```
+#### Search by topics
+
+Search by giving the topic associated with the digital asset, multiple topics can be given seperated by comma
+```
+gh digitalassets --search topics topic1,topic2
+
+```
+
+#### Search by keyword
+
+Searches the description of the asset, multiple keywords can be given seperated by comma
+
+```
+gh digitalassets --search keyword keyword1,keyword2
+
+```
+
