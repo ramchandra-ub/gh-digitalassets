@@ -27,6 +27,30 @@ pip install argparse github InquirerPy requests fuzzywuzzy
 ## Usage
 This project is mainly created to make the digital asset sharing and collaboration easier. It supports CRUDS(Create, read, update, delete, search) and other equivalent operations on the digital assets from the command line. Digital assets can be anything like software code, datasets, ML models etc.
 
+Running ```gh digitalassets --help``` will show all the commands that are available and what they do
+```console
+usage: digitalassets [-h]
+                     {updateFile,createrepo,clone,downloadRepo,downloadFile,listContents,readMetadata,deleteFile,search}
+                     ...
+
+Simple helper commands to interact with Github Repos
+
+positional arguments:
+  {updateFile,createrepo,clone,downloadRepo,downloadFile,listContents,readMetadata,deleteFile,search}
+                        Testing help command
+    updateFile          Update your digital asset files
+    createrepo          Create a digital asset repo on GitHub
+    downloadRepo        Provide the name of the repo to download it as Zip or Tar file
+    downloadFile        Download an individual file from the repo. Requires repo name and file name
+    listContents        List the contents of the repo
+    readMetadata        Read the metadata file from the repo
+    deleteFile          Delete a file from the repo. Requires repo name and file name
+    search              Search for digital assets using topics, name or keywords
+
+options:
+  -h, --help            show this help message and exit
+```
+
 ### Create
 Creates a repo on GitHub by uploading the files specified. It is required for the repo to have data files and a supporting metadata file which shows the type of data that is being uploaded. Please find the metadata format below. It must be a json file of name metadata.json.
 ```json
