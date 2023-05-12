@@ -1,9 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #set -e
 
 
-
-# echo "Hello gh-digitalassets!"
 import argparse
 from github import Github
 from github import GithubException
@@ -75,16 +73,18 @@ def interactiveBuilding():
     topic_inp = topic_writing()
     topics = topic_inp
     print(topics)
+    topics.append("ens-asset")
     var = any(tag in topics for tag in ensTopicList)
     print(var)
     if(not var):
         return("Please provide a topic acoording to the ENS standards", 0)
     else:
-        metaData["Topics"] = topics
+        metaData["topics"] = topics
+
 
     print("Please provide the associations(URSL's). If multiple, provide then coma separated")
     associations = input().split(',')
-    metaData["Associations"] = associations
+    metaData["associations"] = associations
 
     json_object = json.dumps(metaData, indent = 4)
     return(json_object, 1)
@@ -93,7 +93,7 @@ def interactiveBuilding():
 
 
 def metaDataParser(fileContent):
-    parsers = ['assetName', 'description', 'Topics', 'Associations']
+    parsers = ['assetName', 'description', 'topics', 'associations']
     try:
         metaData = json.loads(fileContent or '{}')
     except json.decoder.JSONDecodeError:
@@ -106,13 +106,13 @@ def metaDataParser(fileContent):
     topics_bool = True
     for tag in parsers:
         if(tag in metaData):
-            if(tag == 'Topics'):
-                topics_list = metaData['Topics']
+            if(tag == 'topics'):
+                topics_list = metaData['topics']
                 var = any(tag in ensTopicList for tag in topics_list)
                 if(not var):
                     print("Please provide a topic according to the ENS standards.")
                     topics_bool = False
-            if(tag == 'Associations'):
+            if(tag == 'associations'):
                 if(metaData[tag]):
                     if(type(metaData[tag]) != list):
                         lst = [metaData[tag]]
@@ -122,8 +122,11 @@ def metaDataParser(fileContent):
                 pass 
                 counter += 1
             else:
-                print("There is no value provided for the key {}".format(tag))
-                remaining[tag] = ""
+                if(tag != 'topics'):
+                    print("There is no value provided for the key {}".format(tag))
+                    remaining[tag] = ""
+                else:
+                    pass
         else:
             print("{} key not present in the file".format(tag))
             keys.append(tag)
@@ -136,10 +139,10 @@ def metaDataParser(fileContent):
         if(resp == 'Y'):
             if(len(remaining) > 0):
                 for tag in remaining:
-                    if(tag == 'Associations'):
+                    if(tag == 'associations'):
                         print("Please provide the associations(URL's). If multiple, provide then coma separated")
                         associations = input().split(',')
-                        metaData["Associations"] = associations
+                        metaData["associations"] = associations
                     else:
                         print("Please provide the value of the {}".format(tag))
                         resp_tag = input()
@@ -147,17 +150,17 @@ def metaDataParser(fileContent):
             if(len(keys) > 0):
                 print("Please provide the value for the following keys")
                 for tag in keys:
-                    if(tag == 'Topics'):
+                    if(tag == 'topics'):
                         print("Provide the value of the tag {}".format(tag))
-                        metaData['Topics'] = []
+                        metaData['topics'] = []
                         topic_inp = topic_writing()
                         
                         for top in range(len(topic_inp)):
-                            metaData['Topics'].append(topic_inp[top])
-                    elif(tag == 'Associations'):
+                            metaData['topics'].append(topic_inp[top])
+                    elif(tag == 'associations'):
                         print("Please provide the associations(URL's). If multiple, provide then coma separated")
                         associations = input().split(',')
-                        metaData["Associations"] = associations
+                        metaData["associations"] = associations
                     else:
                         print("Provide the value of the tag {}".format(tag))
                         resp_tag = input()
@@ -166,11 +169,12 @@ def metaDataParser(fileContent):
                 topic_inp = topic_writing()
 
                 for top in range(len(topic_inp)):
-                    metaData['Topics'].append(topic_inp[top])
+                    metaData['topics'].append(topic_inp[top])
 
         else:
             return("Please change your json file accordingly and re-upload", 0)
 
+    metaData["topics"].append("ens-asset")
     json_object = json.dumps(metaData, indent = 4)
     return(json_object, 1)
 
@@ -209,6 +213,8 @@ def metadata():
                     return(uploadFile, 0)
                 else:
                     gitUpload(uploadFile, metadata.json)
+                    with open(f"{args.filepath}/metadata.json","w") as outfile:
+                        outfile.write(uploadFile)
                     return('success', 1)
 
         else:
@@ -220,6 +226,8 @@ def metadata():
                 return(var, 0)
             else:
                 gitUpload(str(var), 'metadata.json')
+                with open(f"{args.filepath}/metadata.json","w") as outfile:
+                    outfile.write(var)
                 return('success', 1)
 
 
@@ -236,6 +244,8 @@ def metadata():
                     return(uploadFile, 0)
                 else:
                     gitUpload(uploadFile, 'metadata.json')
+                    with open(f"{cwd}metadata.json","w") as outfile:
+                        outfile.write(uploadFile)
                     return('success', 1)
         else:
             with open(cwd + 'metadata.json') as file:
@@ -246,6 +256,8 @@ def metadata():
                 return(var, 0)
             else:
                 gitUpload(str(var), 'metadata.json')
+                with open(f"{cwd}metadata.json","w") as outfile:
+                    outfile.write(var)
                 return('success', 1)
 
 
@@ -640,6 +652,10 @@ def get_github_data(topics, input, value):
            print(count)
            print('Name: ' + name,'\nLink: ' + url, '\nUploaded By: ' + owner + '\n')
 
+def list_assets(input,value):
+   topics = ['ens-asset']
+   get_github_data(topics, input, value)
+
 def search(input,value):
    topics = ['ens-asset']
    if input == 'topics':
@@ -754,6 +770,63 @@ def keyword_search(keywords):
                iterate = False
       else:
          iterate = False
+
+
+def subscribeToRepo(reponame):
+    dotenv_file = dotenv.find_dotenv('variables.env')
+    dotenv.load_dotenv(dotenv_file)
+    my_dict = os.getenv('SUBSCRIBED_REPOS')
+    my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
+
+    if(reponame in my_dict):
+        return("Already subscribed to this repo.")
+    else:
+        try:
+            repo = g.get_repo(reponame)
+            my_dict[reponame] = "" 
+            dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
+            return("subscribed to the repo")
+        except GithubException as e:
+            if e.status == 404:
+                print("Repository not found. Please enter a correct reponame")
+        
+
+
+
+def getStatus(reponame):
+    dotenv_file = dotenv.find_dotenv('variables.env')
+    dotenv.load_dotenv(dotenv_file)
+    my_dict = os.getenv('SUBSCRIBED_REPOS')
+    my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
+
+    if(reponame in my_dict):
+        username = reponame[:reponame.index('/')]
+        repo_name = reponame[reponame.index('/')+1:]
+        repo_status = subprocess.run("gh api https://api.github.com/repos/{}/{}/commits/main".format(username, repo_name), shell=True, capture_output=True)
+     
+        repo_status = json.loads(repo_status.stdout)
+        if(my_dict[reponame] != repo_status['files'][0]['sha']):
+            print("SHA: ", repo_status['files'][0]['sha'])
+            print("File Name: ", repo_status['files'][0]['filename'])
+            print("Status: ", repo_status['files'][0]['status'])
+            print("Additions: ",repo_status['files'][0]['additions'])
+            print("Deletions: ",repo_status['files'][0]['deletions'])
+            print("Changes: ",repo_status['files'][0]['changes'])
+            print("Blob URL: ",repo_status['files'][0]['blob_url'])
+
+            my_dict[reponame] = repo_status['files'][0]['sha']
+            dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
+
+        else:
+            print("No changes to show.")
+
+
+    else:
+        print("Please subscribe to this repo first")
+    
+
+
+
          
          
 ######################################################################################
@@ -783,6 +856,18 @@ def main():
             
         else:
             print("Invalid input")
+
+    ########################## Subscribe related code ######################
+
+    if args.command == "subscribeRepo":
+        res = subscribeToRepo(args.reponame)
+        print(res)
+
+    ########################## Subscribe related code ######################
+
+    if args.command == "getStatus":
+        res = getStatus(args.reponame)
+        #print(res)
 
     ##############################################
     ## Create related code ##
@@ -1017,7 +1102,13 @@ def main():
         except github.GithubException as e:
             print("Error Occured:", e)
             sys.exit()
-            
+    
+    elif args.command == 'list':
+        try:
+            list_assets("topics",[])
+        except Exception as e:
+            print(e)
+
     if args.command == "search":
         try:
             if args.name != None:
@@ -1037,23 +1128,34 @@ if __name__ == '__main__':
     token = check_login()
     g = Github(token)
     user = g.get_user()
-
-    #####
     parser = argparse.ArgumentParser(prog="digitalassets", description="Simple helper commands to interact with Github Repos")
-
     subparser = parser.add_subparsers(dest='command',help="Testing help command")
-
     #reponame = subparser.add_parser("reponame")
+
+
     ############################################################
     ## Update repo related commands
     ############################################################
     update_repo = subparser.add_parser("updateFile", help="Update your digital asset files")
-
     update_repo.add_argument("--reponame", type = str, required = True, help="Give the name of the repo to be updated")
     update_repo.add_argument("--updateType", type = str, required = True, help="Mention the type of the file to be updated i.e. meta-data or data")
     #update_repo.add_argument("--interactiveBuilding", type = str, required = True)
     update_repo.add_argument("--updateFile", type = str, required = False, help="Mention the name of the file which you want to update")
     update_repo.add_argument("--filepath", type = str, required = False, help="Path of the directiry containing your metadata and data parts")
+
+
+
+    #################################################
+    ## Subsribe to a repo commands
+    ##############################################
+    subscribe_repo = subparser.add_parser("subscribeRepo", help="Subscribe to a repo to get updates on the repo")
+    subscribe_repo.add_argument("--reponame", type = str, required = True, help = "Give the reponame to which you want to subscribe")
+
+    #################################################
+    ## getStatus repo commands
+    ##############################################
+    getStatus_repo = subparser.add_parser("getStatus", help="Get the status of the repo")
+    getStatus_repo.add_argument("--reponame", type = str, required = True, help = "Give the reponame you want to get the status of which you subscribed to ")
 
     ############################################################
     ## Create repo related commands
@@ -1090,20 +1192,28 @@ if __name__ == '__main__':
     ############################################################
 
     search_command = subparser.add_parser("search",help = "Search for digital assets using topics, name or keywords")
-    search_command.add_argument("--name", type = str)
-    search_command.add_argument("--topics", type = str)
-    search_command.add_argument("--keywords", type = str)
+    search_command.add_argument("--name", help = "Searches the repo name", type = str)
+    search_command.add_argument("--topics", help = "Searches the repo topics", type = str)
+    search_command.add_argument("--keywords", help = "Searches the keywords in description", type = str)
+
+    ############################################################
+    ## list repo related commands
+    ############################################################
+
+    list_command = subparser.add_parser("list",help = "List all the digital assets")
 
 
     args = parser.parse_args()
-    if args.command != "search":
+    if args.command != "search" and args.command != "subscribeRepo" and args.command != "getStatus" and args.command != 'list':
         repo_name = args.reponame
         try:
             repo = g.get_repo(repo_name)
         except GithubException as e:
             if e.status == 404:
                 print("Repository not found. Go ahead and create it")
-                ## sys.exit()
+                # sys.exit()
+    else:
+        pass
 
 
     #file_content = repo.get_contents(args.updateFile , ref = 'main')
