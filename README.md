@@ -202,9 +202,23 @@ updateFile, filepath parameters are optional.
 updateFile is the name of the file in the repo which you want to update and if the filepath is given, then the the tool will look for the meta-data/data files from that particular directory. Else it will look in the current directory.
 If the meta-data file is to be updated and there is no file or if the file is not according to the standards of the digital asset, then the tool will handle it  interactively as shown above in the create part.
 
-### Subscribe to repo
+### Subscribe
 
+Subscribe to a particular asset in your community after you search/download it.
+```
+gh digitalasset subscribeRepo --reponame <reponame>
+```
 
+It takes a mandatory argument reponame. You subscribe to that asset.
+
+### Get Status
+
+Get the status of an asset to which you have subscribed to.
+```
+gh digitalasset getStatus --reponame <reponame>
+```
+
+It takes a mandatory argument reponame. You subscribe to that asset.
 
 
 
