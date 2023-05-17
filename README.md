@@ -39,6 +39,8 @@ positional arguments:
   {updateFile,createrepo,clone,downloadRepo,downloadFile,listContents,readMetadata,deleteFile,search}
                         Testing help command
     updateFile          Update your digital asset files
+    subscribeRepo       Subscribe to a repo to get updates on the repo
+    getStatus           Get the status of the repo
     createrepo          Create a digital asset repo on GitHub
     downloadRepo        Provide the name of the repo to download it as Zip or Tar file
     downloadFile        Download an individual file from the repo. Requires repo name and file name
@@ -168,9 +170,44 @@ gh digitalassets --search topics topic1,topic2
 #### Search by keyword
 
 Searches the description of the asset, multiple keywords can be given seperated by comma
-
 ```
 gh digitalassets --search keyword keyword1,keyword2
 
 ```
+
+### Update
+
+Update the data/meta-data file or both the files at once. 
+```console
+-h, --help            show this help message and exit
+  --reponame REPONAME   Give the name of the repo to be updated
+  --updateType UPDATETYPE
+                        Mention the type of the file to be updated i.e. meta-data or data
+  --updateFile UPDATEFILE
+                        Mention the name of the file which you want to update
+  --filepath FILEPATH   Path of the directiry containing your metadata and data parts
+```
+The reponame, updateType parameters are mandatory. updateType takes 3 parametes.
+1. data - it only updates the data files
+2. metadata - it only updates the metadata file
+3. both - it updates both data and metadata file.
+updateFile, filepath parameters are optional. updateFile is the name of the file in the repo which you want to update and if the filepath is given, then the the tool will look for the meta-data/data files from that particular directory. Else it will look in the current directory.
+If the meta-data file is to be updated and there is no file or if the file is not according to the standards of the digital asset, then the tool will handle it  interactively as shown above in the create part.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
