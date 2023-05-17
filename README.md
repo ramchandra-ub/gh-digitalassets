@@ -187,12 +187,23 @@ Update the data/meta-data file or both the files at once.
                         Mention the name of the file which you want to update
   --filepath FILEPATH   Path of the directiry containing your metadata and data parts
 ```
+
+update syntax
+```
+gh digitalasset updateFile --reponame <reponame> --updateType <metadata> --updateFile <filename> --filepath <path>
+```
+
 The reponame, updateType parameters are mandatory. updateType takes 3 parametes.
 1. data - it only updates the data files
 2. metadata - it only updates the metadata file
 3. both - it updates both data and metadata file.
-updateFile, filepath parameters are optional. updateFile is the name of the file in the repo which you want to update and if the filepath is given, then the the tool will look for the meta-data/data files from that particular directory. Else it will look in the current directory.
+updateFile, filepath parameters are optional. 
+
+updateFile is the name of the file in the repo which you want to update and if the filepath is given, then the the tool will look for the meta-data/data files from that particular directory. Else it will look in the current directory.
 If the meta-data file is to be updated and there is no file or if the file is not according to the standards of the digital asset, then the tool will handle it  interactively as shown above in the create part.
+
+### Subscribe to repo
+
 
 
 
