@@ -281,8 +281,101 @@ list all the digital assets
 gh digitalasset list
 ```
 
+### Download Repo
 
+Downloads the entire repo either as a Zip file or a Tar file. 
 
+```
+gh digitalassets downloadRepo --reponame <reponame>
+```
+
+It takes a mandotary argument reponame. It gives option to download the repo either as Zip or Tar file. 
+
+```console
+? How would you like to download the repo? 
+❯ Zip
+  Tar
+  
+Download Repo Successful
+```
+
+### Download File
+
+It provides user the option to download an individual file from the repo. It gives user flexibility to download any file form the repo which is an added feature on top of Github.
+
+```
+gh digitalassets downloadFile --reponame <reponame> --filename <filename>
+```
+It takes mandatory argument repo name and optional argument filename. If file name is not specified then it gives user the flexibility to choose from the list of files available in the repo. It accepts fuzzy search. If the user is not sure of the name of the file then it implements a fuzzy search to odwnload the nearest match of the file. User has the option to specify the extension then it downloads all the files with the particular extension. 
+
+```
+gh digitalassets downloadFile --reponame <reponame> --filename <ExtensionName>
+
+```console
+optional arguments:
+  -h, --help           show this help message and exit
+  --fileName FILENAME  File name to be downloaded
+  --reponame REPONAME  Name of the repo
+  ```
+  
+  Example of a sample file download without any filename specified
+  
+  ```
+  ? Select a file to download 
+❯ Blank diagram (1).pdf
+  Home.html
+  Insertion Testing.ipynb
+  metadata.json
+  poster.pdf
+  NewFolder/Action Log .pdf
+  NewFolder/Fibonacci Series.ipynb
+  NewFolder/Home.html
+  NewFolder/poster.pdf
+  ```
+  
+  ### List Contents
+  
+  It lists the contents of the repo. It gives back a list of all the files present in the repo.
+  
+  ```
+  gh digitalassets listContents --reponame <reponame>
+  ```
+  It takes a mandatory argument reponame and lists the content of that repo.
+  
+  ```console
+  optional arguments:
+  -h, --help           show this help message and exit
+  --reponame REPONAME  Name of the repo
+  ```
+  
+  ### Read Metadata
+  
+  Allows the user to read the metadata of a particular repo. It displays the contents of the metadata in a readable format.
+  
+  ```
+  gh digitalassets readMetadata --reponame <reponame>
+  ```
+  
+  It takes mandatory argument reponame.
+  
+  ### Delete File.
+  
+  It allows the user to delete a particular file from the repo. If the file is not found then it displays an error message that the file is not   found. If the file is present in a folder then the entire path needs to be specified.
+  
+  ```
+  gh digitalassets deleteFile --reponame <reponame> --fileName <fileName>
+  
+  gh digitalassets deleteFile --reponame <reponame> --fileName <Folder/filename>
+  ```
+  It takes mandatory arguments reponame and filename.
+  
+  ```console
+  optional arguments:
+  -h, --help           show this help message and exit
+  --fileName FILENAME  File name to be downloaded
+  --reponame REPONAME  Name of the repo
+  ```
+  
 
 
 
