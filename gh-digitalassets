@@ -372,140 +372,140 @@ def dataFile():
 ##########################################################################
 
 ### Metadata Checking and interactive building of missing parts in metadata
-def metaDataParserCreate(fileContent):
-    parsers = ['assetName', 'description', 'topics', 'associations']
-    try:
-        metaData = json.loads(fileContent)
-    except:
-        print("Metadata file is empty. You can use interactive building to build the metadata on the fly. Press Y or N")
-        userinp = input()
-        if userinp == "Y":
-            return interactiveBuildingCreate() 
-        else:
-            print("Please change the file and come back.")
-            sys.exit()
+# def metaDataParserCreate(fileContent):
+#     parsers = ['assetName', 'description', 'topics', 'associations']
+#     try:
+#         metaData = json.loads(fileContent)
+#     except:
+#         print("Metadata file is empty. You can use interactive building to build the metadata on the fly. Press Y or N")
+#         userinp = input()
+#         if userinp == "Y":
+#             return interactiveBuildingCreate() 
+#         else:
+#             print("Please change the file and come back.")
+#             sys.exit()
 
-    remaining = {}
-    keys = []
-    counter = 0
-    topics_bool = True
-    for tag in parsers:
-        if(tag in metaData):
-            if(tag == 'topics'):
-                topics_list = metaData['topics']
-                ensTopicListLower = [x.lower() for x in ensTopicList]
-                var = any(tag in ensTopicListLower for tag in topics_list)
-                if(not var):
-                    print("Please provide a topic according to the ENS standards.")
-                    topics_bool = False
-            if(tag == 'associations'):
-                if(metaData[tag]):
-                    if(type(metaData[tag]) != list):
-                        lst = [metaData[tag]]
-                        metaData[tag] = lst
-            if(metaData[tag]):
-                pass 
-                counter += 1
-            else:
-                print("There is no value provided for the key {}".format(tag))
-                remaining[tag] = ""
-        else:
-            print("{} key not present in the file".format(tag))
-            keys.append(tag)
-    if(counter == 4 and topics_bool == True):
-        metaData["topics"].append("ens-asset")
-        metaData["topics"] = list(set(metaData["topics"]))
-        json_object = json.dumps(metaData, indent = 4)
-        return(json_object, 1,metaData["topics"],metaData["description"])
+#     remaining = {}
+#     keys = []
+#     counter = 0
+#     topics_bool = True
+#     for tag in parsers:
+#         if(tag in metaData):
+#             if(tag == 'topics'):
+#                 topics_list = metaData['topics']
+#                 ensTopicListLower = [x.lower() for x in ensTopicList]
+#                 var = any(tag in ensTopicListLower for tag in topics_list)
+#                 if(not var):
+#                     print("Please provide a topic according to the ENS standards.")
+#                     topics_bool = False
+#             if(tag == 'associations'):
+#                 if(metaData[tag]):
+#                     if(type(metaData[tag]) != list):
+#                         lst = [metaData[tag]]
+#                         metaData[tag] = lst
+#             if(metaData[tag]):
+#                 pass 
+#                 counter += 1
+#             else:
+#                 print("There is no value provided for the key {}".format(tag))
+#                 remaining[tag] = ""
+#         else:
+#             print("{} key not present in the file".format(tag))
+#             keys.append(tag)
+#     if(counter == 4 and topics_bool == True):
+#         metaData["topics"].append("ens-asset")
+#         metaData["topics"] = list(set(metaData["topics"]))
+#         json_object = json.dumps(metaData, indent = 4)
+#         return(json_object, 1,metaData["topics"],metaData["description"])
 
-    if(len(remaining) > 0 or len(keys) > 0 or topics_bool == False):
-        print("Do you want to interactively add the missing keys or values?: Y or N")
-        resp = input()
-        if(resp == 'Y'):
-            if(len(remaining) > 0):
-                for tag in remaining:
-                    if(tag == 'associations'):
-                        print("Please provide the associations(URL's). If multiple, provide then coma separated")
-                        associations = input().split(',')
-                        metaData["associations"] = associations
-                    else:
-                        print("Please provide the value of the {}".format(tag))
-                        resp_tag = input()
-                        metaData[tag] = resp_tag
-            if(len(keys) > 0):
-                print("Please provide the value for the following keys")
-                for tag in keys:
-                    if(tag == "topics"):
-                        print("Provide the value of the tag {}".format(tag))
-                        metaData["topics"] = []
-                        topic_inp = topic_writing()
-                        for top in range(len(topic_inp)):
-                            metaData['topics'].append(topic_inp[top])
-                    elif(tag == 'associations'):
-                        print("Please provide the associations(URL's). If multiple, provide then coma separated")
-                        associations = input().split(',')
-                        metaData["associations"] = associations
-                    else:
-                        print("Provide the value of the tag {}".format(tag))
-                        resp_tag = input()
-                        metaData[tag] = resp_tag
-            if(not topics_bool):
-                topic_inp = topic_writing()
-                for top in range(len(topic_inp)):
-                    metaData['topics'].append(topic_inp[top])
+#     if(len(remaining) > 0 or len(keys) > 0 or topics_bool == False):
+#         print("Do you want to interactively add the missing keys or values?: Y or N")
+#         resp = input()
+#         if(resp == 'Y'):
+#             if(len(remaining) > 0):
+#                 for tag in remaining:
+#                     if(tag == 'associations'):
+#                         print("Please provide the associations(URL's). If multiple, provide then coma separated")
+#                         associations = input().split(',')
+#                         metaData["associations"] = associations
+#                     else:
+#                         print("Please provide the value of the {}".format(tag))
+#                         resp_tag = input()
+#                         metaData[tag] = resp_tag
+#             if(len(keys) > 0):
+#                 print("Please provide the value for the following keys")
+#                 for tag in keys:
+#                     if(tag == "topics"):
+#                         print("Provide the value of the tag {}".format(tag))
+#                         metaData["topics"] = []
+#                         topic_inp = topic_writing()
+#                         for top in range(len(topic_inp)):
+#                             metaData['topics'].append(topic_inp[top])
+#                     elif(tag == 'associations'):
+#                         print("Please provide the associations(URL's). If multiple, provide then coma separated")
+#                         associations = input().split(',')
+#                         metaData["associations"] = associations
+#                     else:
+#                         print("Provide the value of the tag {}".format(tag))
+#                         resp_tag = input()
+#                         metaData[tag] = resp_tag
+#             if(not topics_bool):
+#                 topic_inp = topic_writing()
+#                 for top in range(len(topic_inp)):
+#                     metaData['topics'].append(topic_inp[top])
 
-        else:
-            return("Please change your json file accordingly and re-upload", 0,0,0)
-    metaData["topics"].append("ens-asset")
-    metaData["topics"] = list(set(metaData["topics"]))
-    json_object = json.dumps(metaData, indent = 4)
-    return(json_object,1,metaData["topics"],metaData["description"])
+#         else:
+#             return("Please change your json file accordingly and re-upload", 0,0,0)
+#     metaData["topics"].append("ens-asset")
+#     metaData["topics"] = list(set(metaData["topics"]))
+#     json_object = json.dumps(metaData, indent = 4)
+#     return(json_object,1,metaData["topics"],metaData["description"])
 
 ####################################################################################
 
 ### Interactive building if there is no metadata file
-def interactiveBuildingCreate():
-    metaData = {}
-    print("Please provide the asset Name.")
-    assetName = str(input())
-    metaData["assetName"] = assetName
-    print("Please provide a one liner description")
-    description = str(input())
-    metaData["description"] = description
-    topics = []
-    print("Please select a mandatory topic from below")
-    questions = [
-        {
-        'type': 'list',
-        'name': 'topic',
-        'message': 'What topic to add?',
-        'choices': ["ens-machinelearning", "ens-mathematics", "ens-lifeSciences", "ens-Sports", "ens-others"],
-        'filter': lambda val: val.lower()
-        },
-    ]
-    answers = prompt(questions)
-    # print(answers['topic'])
-    topics.append(answers['topic'])
+# def interactiveBuildingCreate():
+#     metaData = {}
+#     print("Please provide the asset Name.")
+#     assetName = str(input())
+#     metaData["assetName"] = assetName
+#     print("Please provide a one liner description")
+#     description = str(input())
+#     metaData["description"] = description
+#     topics = []
+#     print("Please select a mandatory topic from below")
+#     questions = [
+#         {
+#         'type': 'list',
+#         'name': 'topic',
+#         'message': 'What topic to add?',
+#         'choices': ["ens-machinelearning", "ens-mathematics", "ens-lifeSciences", "ens-Sports", "ens-others"],
+#         'filter': lambda val: val.lower()
+#         },
+#     ]
+#     answers = prompt(questions)
+#     # print(answers['topic'])
+#     topics.append(answers['topic'])
 
-    userinp1 = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
-    if userinp1 == "Y":
-        userinp2 = input("Enter the topic names using comma separation: ")
-        inputsplit = userinp2.split(",")
-        for topic in inputsplit:
-            if topic in topics:
-                print("This topic "+topic+" is already added")
-                continue
-            topics.append(topic)
+#     userinp1 = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
+#     if userinp1 == "Y":
+#         userinp2 = input("Enter the topic names using comma separation: ")
+#         inputsplit = userinp2.split(",")
+#         for topic in inputsplit:
+#             if topic in topics:
+#                 print("This topic "+topic+" is already added")
+#                 continue
+#             topics.append(topic)
     
-    topics.append("ens-asset")
-    metaData["topics"] = topics
+#     topics.append("ens-asset")
+#     metaData["topics"] = topics
 
-    print("Please provide the associations(URSL's). If multiple, provide by giving space")
-    associations = input().split()
-    metaData["associations"] = associations
+#     print("Please provide the associations(URSL's). If multiple, provide by giving space")
+#     associations = input().split()
+#     metaData["associations"] = associations
 
-    json_object = json.dumps(metaData, indent = 4)
-    return(json_object,1,metaData["topics"],metaData["description"])
+#     json_object = json.dumps(metaData, indent = 4)
+#     return(json_object,1,metaData["topics"],metaData["description"])
 
 #####################################################################################
 
