@@ -155,24 +155,64 @@ Search for digital assets using name, topics and keywords
 
 Search by giving the name of the digital asset which will be same as the name of the repo
 
+command 
 ```
-gh digitalassets --search reponame
+>gh digitalassets search --name reponame
+```
+example for search by name 
+```
+>gh digital_asset search --name test
+1
+Name: Testrepo8may2 
+Link: https://github.com/ramchandra-ub/Testrepo8may2 
+Uploaded By: ramchandra-ub
+
+2
+Name: testrepo12may1-18 
+Link: https://github.com/ramchandra-ub/testrepo12may1-18 
+Uploaded By: ramchandra-ub
 
 ```
+
 #### Search by topics
 
 Search by giving the topic associated with the digital asset, multiple topics can be given seperated by comma
 ```
-gh digitalassets --search topics topic1,topic2
+>gh digitalassets search topics topic1,topic2
 
 ```
+example search by topics
+```
+>gh digitalassets search --topics sample-topic
+1
+Name: testrepo12may1-4 
+Link: https://github.com/ramchandra-ub/testrepo12may1-4 
+Uploaded By: ramchandra-ub
 
+2
+Name: testrepo12may1-3 
+Link: https://github.com/ramchandra-ub/testrepo12may1-3 
+Uploaded By: ramchandra-ub
+```
 #### Search by keyword
 
 Searches the description of the asset, multiple keywords can be given seperated by comma
 ```
-gh digitalassets --search keyword keyword1,keyword2
+gh digitalassets search --keyword keyword1,keyword2
 
+```
+example for search by keywords
+```
+>gh digitalassets search --keywords test,sample 
+1
+Name: test-digital-asset 
+Link: https://github.com/Harichandana-Vejendla/test-digital-asset 
+Uploaded By: Harichandana-Vejendla
+
+2
+Name: sample-digital-asset 
+Link: https://github.com/Harichandana-Vejendla/sample-digital-asset 
+Uploaded By: Harichandana-Vejendla
 ```
 
 ### Update
@@ -219,6 +259,15 @@ gh digitalasset getStatus --reponame <reponame>
 ```
 
 It takes a mandatory argument reponame. You subscribe to that asset.
+
+### List 
+
+list all the digital assets
+
+```
+gh digitalasset list
+```
+
 
 
 
