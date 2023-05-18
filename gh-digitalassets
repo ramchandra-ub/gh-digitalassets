@@ -529,6 +529,7 @@ def createasset(repoName):
         return g.get_repo(createdRepo.full_name)
     except github.GithubException as e:
             print("Error Occured: ", e)
+            sys.exit()
 
 ### Taking the topics to be added from the user and uploading to GitHub repo (digital asset)
 ### Created in initial version. Not using in actual implementation
