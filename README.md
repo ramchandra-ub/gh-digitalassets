@@ -1,6 +1,16 @@
 # gh-digitalassets
 A gh cli extension which can be used to perform CRUDS(Create, read, update, delete, search) and other equivalent operations on the digital assets right from the command line.
 
+## Motivation
+In this rapidly evolving digital world, every organization, be it an educational institution, a logistics company, or any other company, possesses an extensive database of digital assets. However, keeping track of these assets has become challenging. Organizations often need to collaborate with others to share these assets, but the process can be cumbersome, with difficulties in sharing, monitoring changes, and searching through vast databases. To simplify this problem, we have partnered with IBM to propose a solution that streamlines the organization of digital assets and facilitates their sharing among different organizations.
+
+Our approach involves maintaining a public database that houses all the assets and ensures they are self-describing. To achieve this, we have created an ecosystem where multiple organizations can collaborate and share their digital assets seamlessly. Each asset is associated with a metadata file that provides comprehensive details about the asset. Additionally, assets are labeled with self-describing topics, which enable categorization based on specific attributes. By leveraging these topics, all assets are effectively organized within the ecosystem.
+
+Overall, our solution aims to enhance asset management and simplify the process of asset sharing between organizations. Through the use of self-describing metadata and categorized topics, we enable efficient searching, streamlined collaboration, and improved visibility into the digital assets owned by each organization.
+
+To facilitate this, we have created a cli tool which is an extension on top of the Github CLI.
+
+
 ## Installation
 First, the GitHub Cli must be installed. Please follow this link https://github.com/cli/cli#installation to install GitHub Cli.
 
@@ -30,24 +40,26 @@ This project is mainly created to make the digital asset sharing and collaborati
 Running ```gh digitalassets --help``` will show all the commands that are available and what they do
 ```console
 usage: digitalassets [-h]
-                     {updateFile,createrepo,clone,downloadRepo,downloadFile,listContents,readMetadata,deleteFile,search}
+                     {updateFile,subscribeRepo,getStatus,createRepo,downloadRepo,downloadFile,listContents,readMetadata,deleteFile,search,list}
                      ...
 
 Simple helper commands to interact with Github Repos
 
 positional arguments:
-  {updateFile,createrepo,clone,downloadRepo,downloadFile,listContents,readMetadata,deleteFile,search}
-                        Testing help command
+  {updateFile,subscribeRepo,getStatus,createRepo,downloadRepo,downloadFile,listContents,readMetadata,deleteFile,search,list}
+                        Below are the commands that are supported with their descriptions
     updateFile          Update your digital asset files
     subscribeRepo       Subscribe to a repo to get updates on the repo
     getStatus           Get the status of the repo
-    createrepo          Create a digital asset repo on GitHub
+    createRepo          Create a digital asset repo on GitHub
     downloadRepo        Provide the name of the repo to download it as Zip or Tar file
-    downloadFile        Download an individual file from the repo. Requires repo name and file name
+    downloadFile        Download an individual file from the repo. Requires repo name and file
+                        name
     listContents        List the contents of the repo
     readMetadata        Read the metadata file from the repo
     deleteFile          Delete a file from the repo. Requires repo name and file name
     search              Search for digital assets using topics, name or keywords
+    list                List all the digital assets
 
 options:
   -h, --help            show this help message and exit
@@ -79,27 +91,28 @@ It must have all the keys as shown above and there must be one topic from the li
 ```
 ❯ ens-machinelearning
   ens-mathematics
-  ens-lifeSciences
-  ens-Sports
+  ens-lifesciences
+  ens-sports
   ens-others
   ```
 
-Running ```gh digitalassets createrepo --help``` will give the below help on create.
+Running ```gh digitalassets createRepo --help``` will give the below help on create.
 
 ```console
-usage: digitalassets createrepo [-h] --reponame REPONAME [--path PATH] [--empty EMPTY]
+usage: digitalassets createRepo [-h] --reponame REPONAME [--path PATH] [--empty EMPTY]
 
 options:
   -h, --help           show this help message and exit
   --reponame REPONAME  Give the name of the repo to be created
-  --path PATH          Give a folder path to upload files. If not given will take the current directory
+  --path PATH          Give a folder path to upload files. If not given will take the current
+                       directory
   --empty EMPTY        True if we need to create empty repo. By defualt False
 ```
 
 Here reponame is a mandatory parameter. path is not mandatory. It will upload all files in the current directory if path is not specified. user will be given a warning like below before proceeding with the current directory.
 
 ```console
->gh digitalassets createrepo --reponame testrepo
+>gh digitalassets createRepo --reponame testrepo
 Files must be uploaded when creating a non-empty repo
 Files in the current repo are:
 ['metadata.json', 'test.py']
@@ -109,7 +122,7 @@ Pressing N will not create any repo and changes can be made.
 
 #### Sample create repo flow when path is given and the metadata.json has all the required fields.
 ```console
->gh digitalassets createrepo --reponame testrepo3may1 --path C:\Users\ramnu\UploadDigitalAsset
+>gh digitalassets createRepo --reponame testrepo3may1 --path C:\Users\ramnu\UploadDigitalAsset
 Repo created with name ramchandra-ub/testrepo3may1
 ['metadata.json', 'test.py']
 All files in the specified directory uploaded
@@ -120,7 +133,7 @@ It will create a repo and upload the files in the repo. It will also crawl throu
 #### Sample create repo flow when path is given and the metadata.json is not found
 The tool will be able to interactively create the metdata file as shown below.
 ```console
->gh digitalassets createrepo --reponame testrepo3may2 --path C:\Users\ramnu\UploadDigitalAsset
+>gh digitalassets createRepo --reponame testrepo3may2 --path C:\Users\ramnu\UploadDigitalAsset
 Metadata file not found. It is mandatory for a digital asset.
 You can create it interactively. Press Y to create interactively, or press N to create it manually: Y
 Please provide the asset Name.
