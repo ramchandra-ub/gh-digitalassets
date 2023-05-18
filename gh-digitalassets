@@ -410,6 +410,7 @@ def metaDataParserCreate(fileContent):
             keys.append(tag)
     if(counter == 4 and topics_bool == True):
         metaData["topics"].append("ens-asset")
+        metaData["topics"] = list(set(metaData["topics"]))
         json_object = json.dumps(metaData, indent = 4)
         return(json_object, 1,metaData["topics"],metaData["description"])
 
@@ -452,6 +453,7 @@ def metaDataParserCreate(fileContent):
         else:
             return("Please change your json file accordingly and re-upload", 0,0,0)
     metaData["topics"].append("ens-asset")
+    metaData["topics"] = list(set(metaData["topics"]))
     json_object = json.dumps(metaData, indent = 4)
     return(json_object,1,metaData["topics"],metaData["description"])
 
