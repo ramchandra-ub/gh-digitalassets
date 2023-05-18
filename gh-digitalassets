@@ -100,20 +100,21 @@ def interactiveBuilding():
     topics = topic_inp
     print(topics)
     topics.append("ens-asset")
-    var = any(tag in topics for tag in ensTopicList)
-    print(var)
-    if(not var):
-        return("Please provide a topic acoording to the ENS standards", 0)
-    else:
-        metaData["topics"] = topics
+    # var = any(tag in topics for tag in ensTopicList)
+    # print(var)
+    # if(not var):
+    #     return("Please provide a topic acoording to the ENS standards", 0)
+    # else:
+    #     metaData["topics"] = topics
 
+    metaData["topics"] = topics
 
     print("Please provide the associations(URSL's). If multiple, provide then coma separated")
     associations = input().split(',')
     metaData["associations"] = associations
 
     json_object = json.dumps(metaData, indent = 4)
-    return(json_object, 1)
+    return(json_object, 1,metaData["topics"],metaData["description"])
 
 
 
@@ -157,8 +158,10 @@ def metaDataParser(fileContent):
             print("{} key not present in the file".format(tag))
             keys.append(tag)
     if(counter == 4 and topics_bool == True):
+        metaData["topics"].append("ens-asset")
+        metaData["topics"] = list(set(metaData["topics"]))
         json_object = json.dumps(metaData, indent = 4)
-        return(json_object, 1)
+        return(json_object, 1,metaData["topics"],metaData["description"])
 
     if(len(remaining) > 0 or len(keys) > 0 or topics_bool == False):
         print("Do you want to interactively add the missing keys or values?: Y or N")
@@ -200,10 +203,10 @@ def metaDataParser(fileContent):
 
         else:
             return("Please change your json file accordingly and re-upload", 0)
-
     metaData["topics"].append("ens-asset")
+    metaData["topics"] = list(set(metaData["topics"]))
     json_object = json.dumps(metaData, indent = 4)
-    return(json_object, 1)
+    return(json_object, 1,metaData["topics"],metaData["description"])
 
 
 
