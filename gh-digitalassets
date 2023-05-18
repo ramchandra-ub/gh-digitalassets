@@ -57,10 +57,36 @@ def topic_writing():
         },
     ]
     answers = prompt(questions)
-    print("Do you want to add more topics?, If yes, please add them coma separated:")
-    resp = input().split(',')
-    resp.append(answers['topic'])
-    return(resp)
+    topics = []
+    topics.append(answers['topic'])
+    # print("Do you want to add more topics?, If yes, please add them coma separated:")
+    # resp = input().split(',')
+    # resp.append(answers['topic'])
+    userinp1 = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
+    if userinp1 == "Y":
+        userinp2 = input("Enter the topic names using comma separation: ")
+        inputsplit = userinp2.split(",")
+        for topic in inputsplit:
+            if topic in topics:
+                print("This topic "+topic+" is already added")
+                continue
+            topics.append(topic)
+    return(topics)
+
+
+# userinp1 = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
+    # if userinp1 == "Y":
+    #     userinp2 = input("Enter the topic names using comma separation: ")
+    #     inputsplit = userinp2.split(",")
+    #     for topic in inputsplit:
+    #         if topic in topics:
+    #             print("This topic "+topic+" is already added")
+    #             continue
+    #         topics.append(topic)
+    
+    # topics.append("ens-asset")
+    # metaData["topics"] = topics
+
 
 def interactiveBuilding():
     metaData = {}
