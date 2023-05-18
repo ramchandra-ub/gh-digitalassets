@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #set -e
 
 
@@ -17,7 +17,7 @@ import github
 from fuzzywuzzy import fuzz
 
 
-
+#before performing any operation, the tool checks if the user is logged into an account or not.
 def check_login():
     token = subprocess.run("gh auth token", shell = True, capture_output = True)
     token = token.stdout.decode('ascii').strip()
@@ -32,7 +32,7 @@ def check_login():
     return token
 
 
-
+#login to an account
 def login():
     print('logging in')
     subprocess.run("gh auth login", shell = True)
@@ -44,7 +44,7 @@ def login():
 
 
 
-
+#build the topics according to the ens standards, also take user personal topics
 def topic_writing():
     print("Please choose a topic according to the ENS standards. Here are the topics you can choose from:")
     questions = [
@@ -87,7 +87,7 @@ def topic_writing():
     # topics.append("ens-asset")
     # metaData["topics"] = topics
 
-
+#metadata file does not exist. Build it interactively.
 def interactiveBuilding():
     metaData = {}
     print("Please provide the asset Name.")
@@ -100,25 +100,24 @@ def interactiveBuilding():
     topics = topic_inp
     print(topics)
     topics.append("ens-asset")
-    # var = any(tag in topics for tag in ensTopicList)
-    # print(var)
-    # if(not var):
-    #     return("Please provide a topic acoording to the ENS standards", 0)
-    # else:
-    #     metaData["topics"] = topics
+    var = any(tag in topics for tag in ensTopicList)
+    print(var)
+    if(not var):
+        return("Please provide a topic acoording to the ENS standards", 0)
+    else:
+        metaData["topics"] = topics
 
-    metaData["topics"] = topics
 
     print("Please provide the associations(URSL's). If multiple, provide then coma separated")
     associations = input().split(',')
     metaData["associations"] = associations
 
     json_object = json.dumps(metaData, indent = 4)
-    return(json_object, 1,metaData["topics"],metaData["description"])
+    return(json_object, 1)
 
 
 
-
+#if metadata file exists, then check if it according to the metadata standard. Else build it interactively
 def metaDataParser(fileContent):
     parsers = ['assetName', 'description', 'topics', 'associations']
     try:
@@ -158,10 +157,8 @@ def metaDataParser(fileContent):
             print("{} key not present in the file".format(tag))
             keys.append(tag)
     if(counter == 4 and topics_bool == True):
-        metaData["topics"].append("ens-asset")
-        metaData["topics"] = list(set(metaData["topics"]))
         json_object = json.dumps(metaData, indent = 4)
-        return(json_object, 1,metaData["topics"],metaData["description"])
+        return(json_object, 1)
 
     if(len(remaining) > 0 or len(keys) > 0 or topics_bool == False):
         print("Do you want to interactively add the missing keys or values?: Y or N")
@@ -203,24 +200,25 @@ def metaDataParser(fileContent):
 
         else:
             return("Please change your json file accordingly and re-upload", 0)
+
     metaData["topics"].append("ens-asset")
-    metaData["topics"] = list(set(metaData["topics"]))
     json_object = json.dumps(metaData, indent = 4)
-    return(json_object, 1,metaData["topics"],metaData["description"])
+    return(json_object, 1)
 
 
 
 
 
 
-
+#git upload a metadata file
 def gitUpload(fileContent, file_content):
-    # update
+ 
     updateFile = repo.get_contents(file_content , ref = 'main')
     repo.update_file(updateFile.path, "updating the file with some changes", fileContent, updateFile.sha, branch = 'main')
 
     print("Updated the file in the repo")
 
+#git upload a data file
 def gitUpload_data(fileContent, updateFile):
 
     file_content = repo.get_contents(updateFile , ref = 'main')
@@ -230,7 +228,7 @@ def gitUpload_data(fileContent, updateFile):
     print("Updated the file in the repo")
 
 
-
+#updating a metadata file
 def metadata():
     if(args.filepath):
         file_list = os.listdir(args.filepath)
@@ -294,7 +292,7 @@ def metadata():
                     outfile.write(var)
                 return('success', 1)
 
-
+#updating a datafile
 def dataFile():
     if(args.filepath):
         file_list = os.listdir(args.filepath)
@@ -379,7 +377,7 @@ def metaDataParserCreate(fileContent):
         print("Metadata file is empty. You can use interactive building to build the metadata on the fly. Press Y or N")
         userinp = input()
         if userinp == "Y":
-            return interactiveBuilding() 
+            return interactiveBuildingCreate() 
         else:
             print("Please change the file and come back.")
             sys.exit()
@@ -677,7 +675,9 @@ def getRepo(repoName):
 
 
 ############ Search Functions ####################
-def get_github_data(topics, input, value):
+
+# Function used to search from the user given topics
+def get_github_data(topics, input):
     st = ""
     first = True
     for t in topics:
@@ -698,23 +698,25 @@ def get_github_data(topics, input, value):
         name = data_json['items'][i]['name']
         url = data_json['items'][i]['html_url']
 
-      #   file_content = github_read_file(owner,name)
         if(input == 'topics'):
            print(count)
            print('Name: ' + name,'\nLink: ' + url, '\nUploaded By: ' + owner + '\n')
 
-def list_assets(input,value):
+# Function used to list all the digital assets
+def list_assets(input):
    topics = ['ens-asset']
-   get_github_data(topics, input, value)
+   get_github_data(topics, input)
 
+# Search by topics, takes topics as input
 def search(input,value):
    topics = ['ens-asset']
    if input == 'topics':
       custom_topics = value.split(",")
       for v in custom_topics:
          topics.append(v)
-   get_github_data(topics, input, value)
+   get_github_data(topics, input)
 
+# search by keyword, hepler function to find keywords in the metadata file
 def github_read_file_str(username, repository_name, github_token=None):
     headers = {}  
     if github_token:
@@ -735,9 +737,9 @@ def github_read_file_str(username, repository_name, github_token=None):
         file_content = ""
     return file_content
 
+# Function to call the github_read_file_str for each digital asset
 def populate_data(data_json,keyword):
     count = 0
-   #  print(data_json)
     done = []
     for i in range(0,len(data_json['items'])):
 
@@ -755,13 +757,12 @@ def populate_data(data_json,keyword):
                 print(count)
                 print('Name: ' + name,'\nLink: ' + url, '\nUploaded By: ' + owner + '\n')
          
-
+# Function to search by the given repo name
 def repo_name_search(name):
    url_2 = "https://api.github.com/search/repositories?q="+name+" in:name topic:ens-asset"
 
    data = request.get(url_2)
    data_json  = data.json()
-   # print('Total Results:',len(data_json['items']),'\n')
 
    res = []
    count = 0
@@ -775,7 +776,7 @@ def repo_name_search(name):
          print('Name: ' + name,'\nLink: ' + url, '\nUploaded By: ' + owner + '\n')
 
 
-
+# Function to search by keywords
 def keyword_search(keywords):
    
    keywords_sp = []
@@ -794,8 +795,8 @@ def keyword_search(keywords):
 
    populate_data(data_json,keywords_sp)
 
+#    below condition checks for pagination
    if "Link" in headers.keys():
-      print('Exists')
       iterate = True
       j = data.headers['Link']
       j = j.split(",")
@@ -808,7 +809,6 @@ def keyword_search(keywords):
       data = request.get(url,headers={
          'Authorization': 'Bearer '+token,
          'Accept': 'application/vnd.github+json'})
-      # data_json  = data.json()
       
       populate_data(data_json,'asset')
       
@@ -823,13 +823,17 @@ def keyword_search(keywords):
          iterate = False
 
 
+############ End of Search Functions ####################
+
+
+#subscribe to a repo
 def subscribeToRepo(reponame):
     dotenv_file = dotenv.find_dotenv('variables.env')
     dotenv.load_dotenv(dotenv_file)
     my_dict = os.getenv('SUBSCRIBED_REPOS')
     my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
     if(reponame in my_dict):
-        return("Already subscribed to this repo.")
+        return("It seems like you have already subscribed to this repo.")
     else:
         try:
             repo = g.get_repo(reponame)
@@ -839,7 +843,7 @@ def subscribeToRepo(reponame):
             repo_status = json.loads(repo_status.stdout)
             my_dict[reponame] = repo_status['files'][0]['sha']
             dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
-            return("subscribed to the repo")
+            return("Success. Subscribed to this repo")
         except GithubException as e:
             print(e)
             if e.status == 404:
@@ -847,7 +851,7 @@ def subscribeToRepo(reponame):
         
 
 
-
+#to get the status of a repo
 def getStatus(reponame):
     dotenv_file = dotenv.find_dotenv('variables.env')
     dotenv.load_dotenv(dotenv_file)
@@ -877,6 +881,8 @@ def getStatus(reponame):
                     print("No changes to show.")
             except Exception as ex:
                 print("An error Occured." + ex.data['message'])
+        else:
+            print("No changes to show")
 
     else:
         print("Please subscribe to this repo first")
@@ -969,7 +975,7 @@ def main():
                                 fileContent = file.read()
                                 ## metaDataParserCreate() function below will parse metadata and check for missing values
                                 ## If there are any missing values we add them interactively
-                                jsonObject, flag, topicsFunc, descFunc = metaDataParser(fileContent)
+                                jsonObject, flag, topicsFunc, descFunc = metaDataParserCreate(fileContent)
                                 ## Below code kicks in if user doesn't want to change metadata interactively
                                 if(flag == 0):
                                     print(jsonObject)
@@ -984,7 +990,7 @@ def main():
                         print("Metadata file not found. It is mandatory for a digital asset.")
                         userinp = input("You can create it interactively. Press Y to create interactively, or press N to create it manually: ")
                         if userinp == "Y":
-                            jsonObject,flag,topicsFunc,descFunc = interactiveBuilding()
+                            jsonObject,flag,topicsFunc,descFunc = interactiveBuildingCreate()
                             with open(f"{os.getcwd()}/metadata.json","w") as outfile:
                                 outfile.write(jsonObject)
                         else:
@@ -1038,7 +1044,7 @@ def main():
                         metadataFlag = 1
                         with open((os.path.join(args.path,files)),'rb') as file:
                             fileContent = file.read()
-                            jsonObject, flag, topicsFunc, descFunc = metaDataParser(fileContent)
+                            jsonObject, flag, topicsFunc, descFunc = metaDataParserCreate(fileContent)
                             
                             if(flag == 0):
                                 print(jsonObject)
@@ -1051,7 +1057,7 @@ def main():
                     print("Metadata file not found. It is mandatory for a digital asset.")
                     userinp = input("You can create it interactively. Press Y to create interactively, or press N to create it manually: ")
                     if userinp == "Y":
-                        jsonObject, dummy, topicsFunc, descFunc = interactiveBuilding()
+                        jsonObject, dummy, topicsFunc, descFunc = interactiveBuildingCreate()
                         with open(f"{args.path}/metadata.json","w") as outfile:
                             outfile.write(jsonObject)
                     else:
@@ -1185,7 +1191,7 @@ def main():
     
     elif args.command == 'list':
         try:
-            list_assets("topics",[])
+            list_assets("topics")
         except Exception as e:
             print(e)
 
@@ -1300,4 +1306,3 @@ if __name__ == '__main__':
    #  args = parser.parse_args()
 
     main()
-
