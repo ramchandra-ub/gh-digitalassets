@@ -524,8 +524,11 @@ def uploadFiles_Directory(filePath,createdRepoName):
 
 ### Creates the repo(digital asset on GitHub)
 def createasset(repoName):
-    createdRepo = user.create_repo(repoName)
-    return g.get_repo(createdRepo.full_name)
+    try:
+        createdRepo = user.create_repo(repoName)
+        return g.get_repo(createdRepo.full_name)
+    except github.GithubException as e:
+            print("Error Occured: ", e)
 
 ### Taking the topics to be added from the user and uploading to GitHub repo (digital asset)
 ### Created in initial version. Not using in actual implementation
@@ -1275,7 +1278,7 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    if args.command not in ["search", "subscribeRepo", "getStatus", "list", "downloadRepo", "downloadFile", "readMetadata", "deleteFile", "listContents"]:
+    if args.command not in ["createRepo", "search", "subscribeRepo", "getStatus", "list", "downloadRepo", "downloadFile", "readMetadata", "deleteFile", "listContents"]:
         repo_name = args.reponame
         try:
             repo = g.get_repo(repo_name)
