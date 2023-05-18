@@ -341,7 +341,7 @@ def dataFile():
 ## helper commands for create ##
 ##########################################################################
 
-### Metadata Checking and interactive building
+### Metadata Checking and interactive building of missing parts in metadata
 def metaDataParserCreate(fileContent):
     parsers = ['assetName', 'description', 'topics', 'associations']
     try:
@@ -429,10 +429,9 @@ def metaDataParserCreate(fileContent):
     json_object = json.dumps(metaData, indent = 4)
     return(json_object,1,metaData["topics"],metaData["description"])
 
-##################################################################
+####################################################################################
 
-## Interactive building if there is no metadata file
-
+### Interactive building if there is no metadata file
 def interactiveBuildingCreate():
     metaData = {}
     print("Please provide the asset Name.")
@@ -476,6 +475,9 @@ def interactiveBuildingCreate():
     json_object = json.dumps(metaData, indent = 4)
     return(json_object,1,metaData["topics"],metaData["description"])
 
+#####################################################################################
+
+### Upload the files in the specified directory to the repository on GitHub
 def uploadFiles_Directory(filePath,createdRepoName):
     allFiles = os.listdir(filePath)
     print(allFiles)
@@ -490,50 +492,59 @@ def uploadFiles_Directory(filePath,createdRepoName):
         createdRepoName.create_file(files,"create file",fileContent,branch="main")
     print("All files in the specified directory uploaded")
 
-def createRepo(repoName):
+######################################################################################
+
+### Creates the repo(digital asset on GitHub)
+def createasset(repoName):
     createdRepo = user.create_repo(repoName)
     return g.get_repo(createdRepo.full_name)
 
-def addTopicsCreation(createdRepoName):
-    print("Topics must be added to this digital asset.\n Please choose from one of the assets below.")
-    repoobj = g.get_repo(createdRepoName.full_name)
-    topics = repoobj.get_topics()
-    questions = [
-        {
-        'type': 'list',
-        'name': 'topic',
-        'message': 'What topic to add?',
-        'choices': ensTopicList,
-        'filter': lambda val: val.lower()
-        },
-    ]
-    answers = prompt(questions)
-    # print(answers['topic'])
-    topics.append(answers['topic'])
-    repoobj.replace_topics(topics)
-    print("Added the given topics to the repo")
-    print("Current topics in this repo are "+str(topics)+"\n")
-    userinp = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
-    if userinp == "Y":
-        userinp1 = input("Enter the topic names using comma separation: ")
-        inputsplit = userinp1.split(",")
-        for topic in inputsplit:
-            if topic in topics:
-                print("This topic "+topic+" is already added")
-                continue
-            topics.append(topic)
-    else:
-        print("Terminating")
-        sys.exit()
+### Taking the topics to be added from the user and uploading to GitHub repo (digital asset)
+### Created in initial version. Not using in actual implementation
+
+# def addTopicsCreation(createdRepoName):
+#     print("Topics must be added to this digital asset.\n Please choose from one of the assets below.")
+#     repoobj = g.get_repo(createdRepoName.full_name)
+#     topics = repoobj.get_topics()
+#     questions = [
+#         {
+#         'type': 'list',
+#         'name': 'topic',
+#         'message': 'What topic to add?',
+#         'choices': ensTopicList,
+#         'filter': lambda val: val.lower()
+#         },
+#     ]
+#     answers = prompt(questions)
+#     # print(answers['topic'])
+#     topics.append(answers['topic'])
+#     repoobj.replace_topics(topics)
+#     print("Added the given topics to the repo")
+#     print("Current topics in this repo are "+str(topics)+"\n")
+#     userinp = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
+#     if userinp == "Y":
+#         userinp1 = input("Enter the topic names using comma separation: ")
+#         inputsplit = userinp1.split(",")
+#         for topic in inputsplit:
+#             if topic in topics:
+#                 print("This topic "+topic+" is already added")
+#                 continue
+#             topics.append(topic)
+#     else:
+#         print("Terminating")
+#         sys.exit()
         
-    repoobj.replace_topics(topics)
-    print("Added the given topics to the repo")
-    print("Current topics in this repo are "+str(topics))
+#     repoobj.replace_topics(topics)
+#     print("Added the given topics to the repo")
+#     print("Current topics in this repo are "+str(topics))
 
 
-def addDesc(createdRepoName):
-    userinp = input("please enter a one line description for the digital asset")
-    subprocess.run(f"gh repo edit {createdRepoName.full_name} -d \"{userinp}\"",shell=True)
+### Taking description from the user and uploading to GitHub Repo(digital asset)
+### Created in initial version. Not using in actual implementation
+
+# def addDesc(createdRepoName):
+#     userinp = input("please enter a one line description for the digital asset")
+#     subprocess.run(f"gh repo edit {createdRepoName.full_name} -d \"{userinp}\"",shell=True)
 
 ######################################################################################
 def download_repo(type,repo,chunkSize = 128):
@@ -892,20 +903,22 @@ def main():
     ##############################################
     ## Create related code ##
     ##############################################
-    if args.command == "createrepo":
+    if args.command == "createRepo":
+        ## variable to track if metadata file is present or not
         metadataFlag = 0
         # g,user = getAuthToken()
-        ## create repo
+
+        ## create empty repo
         if args.empty == "True":
             # createdRepo = user.create_repo(args.reponame)
-            createdRepoName = createRepo(args.reponame)
+            createdRepoName = createasset(args.reponame)
             print("Empty repo created. Upload the digital asset files.")
         else:
             # createdRepo = user.create_repo(args.reponame)
             
             # createdRepoName = g.get_repo(createdRepo.full_name)
 
-            ## read file content
+            ## if no path is given, take current directory and proceed
             if args.path is None:
                 print("Files must be uploaded when creating a non-empty repo")
                 print("Files in the current repo are: ")
@@ -919,8 +932,10 @@ def main():
                             metadataFlag = 1
                             with open((os.path.join(os.getcwd(),files)),'rb') as file:
                                 fileContent = file.read()
+                                ## metaDataParserCreate() function below will parse metadata and check for missing values
+                                ## If there are any missing values we add them interactively
                                 jsonObject, flag, topicsFunc, descFunc = metaDataParserCreate(fileContent)
-                                
+                                ## Below code kicks in if user doesn't want to change metadata interactively
                                 if(flag == 0):
                                     print(jsonObject)
                                     sys.exit()
@@ -929,7 +944,7 @@ def main():
                                         outfile.write(jsonObject)
 
 
-
+                    ### If metdata file is not found below code runs
                     if metadataFlag == 0:
                         print("Metadata file not found. It is mandatory for a digital asset.")
                         userinp = input("You can create it interactively. Press Y to create interactively, or press N to create it manually: ")
@@ -941,7 +956,9 @@ def main():
                             print("Please come back after creating the metadata.json file")
                             sys.exit()
 
-                    createdRepoName = createRepo(args.reponame)
+                    ### After handling all the conditions related to metadata we create the repo
+
+                    createdRepoName = createasset(args.reponame)
                     print("Repo created with name "+ str(createdRepoName.full_name))
                     uploadFiles_Directory(os.getcwd(),createdRepoName)
                     ###################
@@ -956,24 +973,28 @@ def main():
                     ## add the desc to the repo
                     ###################
                     subprocess.run(f"gh repo edit {createdRepoName.full_name} -d {descFunc}",shell=True)
+                    ### Below two lines were used in previous implementation. Not needed
                     # addTopicsCreation(createdRepoName)
                     # addDesc(createdRepoName)
                 else:
                     sys.exit()
 
-            elif os.path.isfile(args.path):
-                createdRepoName = createRepo(args.reponame)
-                print("Repo created with name "+ str(createdRepoName.full_name))
-                with open(args.path, 'rb') as file:
-                    fileContent = file.read()
-                ## upload file to the repo
-                # createdRepoName.create_file("testfile.txt","create file",fileContent,branch="main")
+            ### If user gives a single file to upload instead of directory
 
-                createdRepoName.create_file(args.path.split('\\')[-1],"create file",fileContent,branch="main")
-                print("testfile created in the repo" + str(createdRepoName.full_name))
-                addTopicsCreation(createdRepoName)
-                addDesc(createdRepoName)
+            # elif os.path.isfile(args.path):
+            #     createdRepoName = createRepo(args.reponame)
+            #     print("Repo created with name "+ str(createdRepoName.full_name))
+            #     with open(args.path, 'rb') as file:
+            #         fileContent = file.read()
+            #     ## upload file to the repo
+            #     # createdRepoName.create_file("testfile.txt","create file",fileContent,branch="main")
 
+            #     createdRepoName.create_file(args.path.split('\\')[-1],"create file",fileContent,branch="main")
+            #     print("testfile created in the repo" + str(createdRepoName.full_name))
+            #     addTopicsCreation(createdRepoName)
+            #     addDesc(createdRepoName)
+            
+            ### if user gives a path instead of current directory
             elif os.path.isdir(args.path):
                 allFiles = os.listdir(args.path)
                 print(allFiles)
@@ -1002,7 +1023,7 @@ def main():
                         print("Please come back after creating the metadata.json file")
                         sys.exit()
 
-                createdRepoName = createRepo(args.reponame)
+                createdRepoName = createasset(args.reponame)
                 print("Repo created with name "+ str(createdRepoName.full_name))
                 uploadFiles_Directory(args.path,createdRepoName)
                 ###################
@@ -1014,7 +1035,7 @@ def main():
                 ## add the desc to the repo
                 ###################
                 subprocess.run(f"gh repo edit {createdRepoName.full_name} -d {descFunc}",shell=True)
-
+                ### Below two lines were used in previous implementation. Not needed
                 # addTopicsCreation(createdRepoName)
                 # addDesc(createdRepoName)
     
@@ -1153,7 +1174,7 @@ if __name__ == '__main__':
     g = Github(token)
     user = g.get_user()
     parser = argparse.ArgumentParser(prog="digitalassets", description="Simple helper commands to interact with Github Repos")
-    subparser = parser.add_subparsers(dest='command',help="Testing help command")
+    subparser = parser.add_subparsers(dest='command',help="Below are the commands that are supported with their descriptions")
     #reponame = subparser.add_parser("reponame")
 
 
@@ -1185,10 +1206,10 @@ if __name__ == '__main__':
     ## Create repo related commands
     ############################################################
 
-    createrepo = subparser.add_parser("createrepo",help="Create a digital asset repo on GitHub")
-    createrepo.add_argument("--reponame",type=str,required=True,help="Give the name of the repo to be created")
-    createrepo.add_argument("--path",type=str,required=False,help= "Give a folder path to upload files. If not given will take the current directory")
-    createrepo.add_argument("--empty",type=str,required=False,default="False",help="True if we need to create empty repo. By defualt False")
+    createRepo = subparser.add_parser("createRepo",help="Create a digital asset repo on GitHub")
+    createRepo.add_argument("--reponame",type=str,required=True,help="Give the name of the repo to be created")
+    createRepo.add_argument("--path",type=str,required=False,help= "Give a folder path to upload files. If not given will take the current directory")
+    createRepo.add_argument("--empty",type=str,required=False,default="False",help="True if we need to create empty repo. By defualt False")
     # createrepo.add_argument("--addtopics",nargs='+',type=str,required=False,help="Give a list of topics separated by spaces. Not a required argument")
 
     #################################################################
