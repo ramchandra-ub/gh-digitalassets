@@ -100,20 +100,21 @@ def interactiveBuilding():
     topics = topic_inp
     print(topics)
     topics.append("ens-asset")
-    var = any(tag in topics for tag in ensTopicList)
-    print(var)
-    if(not var):
-        return("Please provide a topic acoording to the ENS standards", 0)
-    else:
-        metaData["topics"] = topics
+    # var = any(tag in topics for tag in ensTopicList)
+    # print(var)
+    # if(not var):
+    #     return("Please provide a topic acoording to the ENS standards", 0)
+    # else:
+    #     metaData["topics"] = topics
 
+    metaData["topics"] = topics
 
     print("Please provide the associations(URSL's). If multiple, provide then coma separated")
     associations = input().split(',')
     metaData["associations"] = associations
 
     json_object = json.dumps(metaData, indent = 4)
-    return(json_object, 1)
+    return(json_object, 1,metaData["topics"],metaData["description"])
 
 
 
@@ -157,8 +158,10 @@ def metaDataParser(fileContent):
             print("{} key not present in the file".format(tag))
             keys.append(tag)
     if(counter == 4 and topics_bool == True):
+        metaData["topics"].append("ens-asset")
+        metaData["topics"] = list(set(metaData["topics"]))
         json_object = json.dumps(metaData, indent = 4)
-        return(json_object, 1)
+        return(json_object, 1,metaData["topics"],metaData["description"])
 
     if(len(remaining) > 0 or len(keys) > 0 or topics_bool == False):
         print("Do you want to interactively add the missing keys or values?: Y or N")
@@ -200,10 +203,10 @@ def metaDataParser(fileContent):
 
         else:
             return("Please change your json file accordingly and re-upload", 0)
-
     metaData["topics"].append("ens-asset")
+    metaData["topics"] = list(set(metaData["topics"]))
     json_object = json.dumps(metaData, indent = 4)
-    return(json_object, 1)
+    return(json_object, 1,metaData["topics"],metaData["description"])
 
 
 
@@ -376,7 +379,7 @@ def metaDataParserCreate(fileContent):
         print("Metadata file is empty. You can use interactive building to build the metadata on the fly. Press Y or N")
         userinp = input()
         if userinp == "Y":
-            return interactiveBuildingCreate() 
+            return interactiveBuilding() 
         else:
             print("Please change the file and come back.")
             sys.exit()
@@ -966,7 +969,7 @@ def main():
                                 fileContent = file.read()
                                 ## metaDataParserCreate() function below will parse metadata and check for missing values
                                 ## If there are any missing values we add them interactively
-                                jsonObject, flag, topicsFunc, descFunc = metaDataParserCreate(fileContent)
+                                jsonObject, flag, topicsFunc, descFunc = metaDataParser(fileContent)
                                 ## Below code kicks in if user doesn't want to change metadata interactively
                                 if(flag == 0):
                                     print(jsonObject)
@@ -981,7 +984,7 @@ def main():
                         print("Metadata file not found. It is mandatory for a digital asset.")
                         userinp = input("You can create it interactively. Press Y to create interactively, or press N to create it manually: ")
                         if userinp == "Y":
-                            jsonObject,flag,topicsFunc,descFunc = interactiveBuildingCreate()
+                            jsonObject,flag,topicsFunc,descFunc = interactiveBuilding()
                             with open(f"{os.getcwd()}/metadata.json","w") as outfile:
                                 outfile.write(jsonObject)
                         else:
@@ -1035,7 +1038,7 @@ def main():
                         metadataFlag = 1
                         with open((os.path.join(args.path,files)),'rb') as file:
                             fileContent = file.read()
-                            jsonObject, flag, topicsFunc, descFunc = metaDataParserCreate(fileContent)
+                            jsonObject, flag, topicsFunc, descFunc = metaDataParser(fileContent)
                             
                             if(flag == 0):
                                 print(jsonObject)
@@ -1048,7 +1051,7 @@ def main():
                     print("Metadata file not found. It is mandatory for a digital asset.")
                     userinp = input("You can create it interactively. Press Y to create interactively, or press N to create it manually: ")
                     if userinp == "Y":
-                        jsonObject, dummy, topicsFunc, descFunc = interactiveBuildingCreate()
+                        jsonObject, dummy, topicsFunc, descFunc = interactiveBuilding()
                         with open(f"{args.path}/metadata.json","w") as outfile:
                             outfile.write(jsonObject)
                     else:
