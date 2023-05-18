@@ -978,7 +978,7 @@ def main():
                                 fileContent = file.read()
                                 ## metaDataParserCreate() function below will parse metadata and check for missing values
                                 ## If there are any missing values we add them interactively
-                                jsonObject, flag, topicsFunc, descFunc = metaDataParserCreate(fileContent)
+                                jsonObject, flag, topicsFunc, descFunc = metaDataParser(fileContent)
                                 ## Below code kicks in if user doesn't want to change metadata interactively
                                 if(flag == 0):
                                     print(jsonObject)
@@ -993,7 +993,7 @@ def main():
                         print("Metadata file not found. It is mandatory for a digital asset.")
                         userinp = input("You can create it interactively. Press Y to create interactively, or press N to create it manually: ")
                         if userinp == "Y":
-                            jsonObject,flag,topicsFunc,descFunc = interactiveBuildingCreate()
+                            jsonObject,flag,topicsFunc,descFunc = interactiveBuilding()
                             with open(f"{os.getcwd()}/metadata.json","w") as outfile:
                                 outfile.write(jsonObject)
                         else:
@@ -1047,7 +1047,7 @@ def main():
                         metadataFlag = 1
                         with open((os.path.join(args.path,files)),'rb') as file:
                             fileContent = file.read()
-                            jsonObject, flag, topicsFunc, descFunc = metaDataParserCreate(fileContent)
+                            jsonObject, flag, topicsFunc, descFunc = metaDataParser(fileContent)
                             
                             if(flag == 0):
                                 print(jsonObject)
@@ -1060,7 +1060,7 @@ def main():
                     print("Metadata file not found. It is mandatory for a digital asset.")
                     userinp = input("You can create it interactively. Press Y to create interactively, or press N to create it manually: ")
                     if userinp == "Y":
-                        jsonObject, dummy, topicsFunc, descFunc = interactiveBuildingCreate()
+                        jsonObject, dummy, topicsFunc, descFunc = interactiveBuilding()
                         with open(f"{args.path}/metadata.json","w") as outfile:
                             outfile.write(jsonObject)
                     else:
