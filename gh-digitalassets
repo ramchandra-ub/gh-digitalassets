@@ -52,7 +52,7 @@ def topic_writing():
         'type': 'list',
         'name': 'topic',
         'message': 'What topic to add?',
-        'choices': ["ens-machineLearning", "ens-mathematics", "ens-lifeSciences", "ens-Sports", "ens-others"],
+        'choices': ["ens-machinelearning", "ens-mathematics", "ens-lifesciences", "ens-sports", "ens-others"],
         'filter': lambda val: val.lower()
         },
     ]
@@ -965,7 +965,7 @@ def main():
                     ## add the topics to the repo
                     ###################
                     repoobj = g.get_repo(createdRepoName.full_name)
-                    print("This is topic func test")
+                    print("Below topics have been added to the repo")
                     print(topicsFunc)
 
                     repoobj.replace_topics(topicsFunc)
