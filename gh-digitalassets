@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #set -e
 
 
@@ -108,7 +108,7 @@ def metaDataParser(fileContent):
         if(tag in metaData):
             if(tag == 'topics'):
                 topics_list = metaData['topics']
-                var = any(tag in ensTopicList for tag in topics_list)
+                var = any(tag in topics_list for tag in ensTopicList)
                 if(not var):
                     print("Please provide a topic according to the ENS standards.")
                     topics_bool = False
@@ -131,7 +131,8 @@ def metaDataParser(fileContent):
             print("{} key not present in the file".format(tag))
             keys.append(tag)
     if(counter == 4 and topics_bool == True):
-        return(metaData, 1)
+        json_object = json.dumps(metaData, indent = 4)
+        return(json_object, 1)
 
     if(len(remaining) > 0 or len(keys) > 0 or topics_bool == False):
         print("Do you want to interactively add the missing keys or values?: Y or N")
@@ -215,6 +216,7 @@ def metadata():
                     gitUpload(uploadFile, metadata.json)
                     with open(f"{args.filepath}/metadata.json","w") as outfile:
                         outfile.write(uploadFile)
+                        
                     return('success', 1)
 
         else:
@@ -228,6 +230,7 @@ def metadata():
                 gitUpload(str(var), 'metadata.json')
                 with open(f"{args.filepath}/metadata.json","w") as outfile:
                     outfile.write(var)
+                    
                 return('success', 1)
 
 
@@ -245,6 +248,7 @@ def metadata():
                 else:
                     gitUpload(uploadFile, 'metadata.json')
                     with open(f"{cwd}metadata.json","w") as outfile:
+                        
                         outfile.write(uploadFile)
                     return('success', 1)
         else:
@@ -257,6 +261,7 @@ def metadata():
             else:
                 gitUpload(str(var), 'metadata.json')
                 with open(f"{cwd}metadata.json","w") as outfile:
+                    
                     outfile.write(var)
                 return('success', 1)
 
@@ -777,16 +782,20 @@ def subscribeToRepo(reponame):
     dotenv.load_dotenv(dotenv_file)
     my_dict = os.getenv('SUBSCRIBED_REPOS')
     my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
-
     if(reponame in my_dict):
         return("Already subscribed to this repo.")
     else:
         try:
             repo = g.get_repo(reponame)
-            my_dict[reponame] = "" 
+            username = reponame[:reponame.index('/')]
+            repo_name = reponame[reponame.index('/')+1:]
+            repo_status = subprocess.run("gh api https://api.github.com/repos/{}/{}/commits/main".format(username, repo_name), shell=True, capture_output=True)
+            repo_status = json.loads(repo_status.stdout)
+            my_dict[reponame] = repo_status['files'][0]['sha']
             dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
             return("subscribed to the repo")
         except GithubException as e:
+            print(e)
             if e.status == 404:
                 print("Repository not found. Please enter a correct reponame")
         
@@ -805,21 +814,23 @@ def getStatus(reponame):
         repo_status = subprocess.run("gh api https://api.github.com/repos/{}/{}/commits/main".format(username, repo_name), shell=True, capture_output=True)
      
         repo_status = json.loads(repo_status.stdout)
-        if(my_dict[reponame] != repo_status['files'][0]['sha']):
-            print("SHA: ", repo_status['files'][0]['sha'])
-            print("File Name: ", repo_status['files'][0]['filename'])
-            print("Status: ", repo_status['files'][0]['status'])
-            print("Additions: ",repo_status['files'][0]['additions'])
-            print("Deletions: ",repo_status['files'][0]['deletions'])
-            print("Changes: ",repo_status['files'][0]['changes'])
-            print("Blob URL: ",repo_status['files'][0]['blob_url'])
+        if(len(repo_status['files']) > 0):
+            try:
+                if(my_dict[reponame] != repo_status['files'][0]['sha']):
+                    print("SHA: ", repo_status['files'][0]['sha'])
+                    print("File Name: ", repo_status['files'][0]['filename'])
+                    print("Status: ", repo_status['files'][0]['status'])
+                    print("Additions: ",repo_status['files'][0]['additions'])
+                    print("Deletions: ",repo_status['files'][0]['deletions'])
+                    print("Changes: ",repo_status['files'][0]['changes'])
+                    print("Blob URL: ",repo_status['files'][0]['blob_url'])
 
-            my_dict[reponame] = repo_status['files'][0]['sha']
-            dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
-
-        else:
-            print("No changes to show.")
-
+                    my_dict[reponame] = repo_status['files'][0]['sha']
+                    dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
+                else:
+                    print("No changes to show.")
+            except Exception as ex:
+                print("An error Occured." + ex.data['message'])
 
     else:
         print("Please subscribe to this repo first")
@@ -836,23 +847,32 @@ def main():
         print("\n####################### Update File ##########################\n")
 
         if(args.updateType == 'metadata'):
-            imp, flag = metadata()
-            if(flag == 0):
-                print(imp)
+            try:
+                imp, flag = metadata()
+                if(flag == 0):
+                    print(imp)
+            except Exception as ex:
+                print("An error Occured." + ex.data['message'])
 
         elif(args.updateType == 'data'):
-            imp, flag = dataFile()
-            if(flag == 0):
-                print(imp)
+            try:
+                imp, flag = dataFile()
+                if(flag == 0):
+                    print(imp)
+            except Exception as ex:
+                print("An error Occured" + ex.data['message'])
         
         elif(args.updateType == 'both'):
-            imp1, flag1 = dataFile()
-            if(flag1 == 0):
-                print(imp1)
-                sys.exit()
-            imp, flag = metadata()   
-            if(flag == 0):
-                print(imp)
+            try:
+                imp1, flag1 = dataFile()
+                if(flag1 == 0):
+                    print(imp1)
+                    sys.exit()
+                imp, flag = metadata()   
+                if(flag == 0):
+                    print(imp)
+            except Exception as ex:
+                print("An error Occured." + ex.data['message'])
             
         else:
             print("Invalid input")
@@ -998,11 +1018,11 @@ def main():
                 # addTopicsCreation(createdRepoName)
                 # addDesc(createdRepoName)
     
-    if args.command == "clone":
-        print("Cloning a repo")
+
 
     elif args.command == "downloadRepo":
         repo = args.reponame
+        newRepo = getRepo(repo)
         questions = [
             {
             'type' : 'list',
@@ -1062,9 +1082,13 @@ def main():
             contentData = content.decoded_content
             data = contentData.decode('utf8').replace("'", '"')
             jsonData = json.loads(data)
-            print("******************* Metadata Contents ******************")
-            for i in jsonData['Topics']:
-                print(i)
+            print("******************** Metadata Contents ********************")
+            print("Asset Name: " + jsonData['assetName'])
+            print("Description: " + jsonData['description'])
+            print("Topics: ", end = '')
+            print(*jsonData['Topics'], sep = ",")
+            print("Associations: " ,end = '')
+            print(*jsonData['Associations'], sep = ",")
 
         except github.UnknownObjectException:
             print("Metadata file not available.")
@@ -1085,7 +1109,7 @@ def main():
         try:
             contents = expandRepo(args.reponame)
             for each in contents:
-                if each.name == args.fileName:
+                if each.path == args.fileName:
                     repo.delete_file(each.path, args.fileName + " Deleted",each.sha, branch = 'main')
                     print(args.fileName + " Deleted")
                     sys.exit()
@@ -1171,14 +1195,12 @@ if __name__ == '__main__':
     ##Read and download repo
     #################################################################
 
-    clone = subparser.add_parser('clone')
     downloadRepo = subparser.add_parser('downloadRepo',help = "Provide the name of the repo to download it as Zip or Tar file")
     downloadFile = subparser.add_parser('downloadFile', help = "Download an individual file from the repo. Requires repo name and file name")
     listContents = subparser.add_parser('listContents', help = "List the contents of the repo")
     readMetadata = subparser.add_parser('readMetadata', help = "Read the metadata file from the repo")
     deleteFile = subparser.add_parser('deleteFile' , help = "Delete a file from the repo. Requires repo name and file name")
 
-    clone.add_argument('--reponame', type = str, required = True, help = "Provide the name of the repo to clone")
     downloadRepo.add_argument('--reponame', type = str, required = True, help = "Name of the repo")
     downloadFile.add_argument('--fileName', type = str, required = False, help = "File name to be downloaded")
     readMetadata.add_argument('--reponame', type = str, required = True, help = "Name of the repo")
@@ -1204,7 +1226,7 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    if args.command != "search" and args.command != "subscribeRepo" and args.command != "getStatus" and args.command != 'list':
+    if args.command not in ["search", "subscribeRepo", "getStatus", "list", "downloadRepo", "downloadFile", "readMetadata", "deleteFile", "listContents"]:
         repo_name = args.reponame
         try:
             repo = g.get_repo(repo_name)
@@ -1218,7 +1240,7 @@ if __name__ == '__main__':
 
     #file_content = repo.get_contents(args.updateFile , ref = 'main')
 
-    ensTopicList = ["ens-machineLearning", "ens-mathematics", "ens-lifeSciences", "ens-Sports", "ens-others"]
+    ensTopicList = ["ens-machinelearning", "ens-mathematics", "ens-lifesciences", "ens-sports", "ens-others"]
    #  args = parser.parse_args()
 
     main()
