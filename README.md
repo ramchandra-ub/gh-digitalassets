@@ -310,6 +310,7 @@ It takes mandatory argument repo name and optional argument filename. If file na
 
 ```
 gh digitalassets downloadFile --reponame <reponame> --filename <ExtensionName>
+```
 
 ```console
 optional arguments:
