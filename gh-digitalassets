@@ -1062,10 +1062,10 @@ if __name__ == '__main__':
     ############################################################
     update_repo = subparser.add_parser("updateFile", help="Update your digital asset files")
     update_repo.add_argument("--reponame", type = str, required = True, help="Give the name of the repo to be updated")
-    update_repo.add_argument("--updateType", type = str, required = True, help="Mention the type of the file to be updated i.e. meta-data or data")
+    update_repo.add_argument("--updateType", type = str, required = True, help="Mention the type of the file to be updated i.e. metadata or data")
     #update_repo.add_argument("--interactiveBuilding", type = str, required = True)
     update_repo.add_argument("--updateFile", type = str, required = False, help="Mention the name of the file which you want to update")
-    update_repo.add_argument("--filepath", type = str, required = False, help="Path of the directiry containing your metadata and data parts")
+    update_repo.add_argument("--filepath", type = str, required = False, help="Path of the directory containing your metadata and data parts")
 
 
 
