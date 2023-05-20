@@ -52,7 +52,7 @@ def topic_writing():
         'type': 'list',
         'name': 'topic',
         'message': 'What topic to add?',
-        'choices': ["ens-machinelearning", "ens-mathematics", "ens-lifesciences", "ens-sports", "ens-others"],
+        'choices': ensTopicList,
         'filter': lambda val: val.lower()
         },
     ]
