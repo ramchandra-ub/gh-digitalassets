@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #set -e
 
 
@@ -675,7 +675,7 @@ def subscribeToRepo(reponame):
     my_dict = os.getenv('SUBSCRIBED_REPOS')
     my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
     if(reponame in my_dict):
-        return("It seems like you have already subscribed to this repo.")
+        print("It seems like you have already subscribed to this repo.")
     else:
         try:
             repo = g.get_repo(reponame)
@@ -683,11 +683,13 @@ def subscribeToRepo(reponame):
             repo_name = reponame[reponame.index('/')+1:]
             repo_status = subprocess.run("gh api https://api.github.com/repos/{}/{}/commits/main".format(username, repo_name), shell=True, capture_output=True)
             repo_status = json.loads(repo_status.stdout)
-            my_dict[reponame] = repo_status['files'][0]['sha']
+            if(len(repo_status['files']) > 0):
+                my_dict[reponame] = repo_status['files'][0]['sha']
+            else:
+                my_dict[reponame] = ''
             dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
-            return("Success. Subscribed to this repo")
+            print("Success. Subscribed to this repo")
         except GithubException as e:
-            print(e)
             if e.status == 404:
                 print("Repository not found. Please enter a correct reponame")
         
@@ -728,6 +730,17 @@ def getStatus(reponame):
 
     else:
         print("Please subscribe to this repo first")
+
+#to get the list of subscribed repos
+def getSubscribedRepos():
+    dotenv_file = dotenv.find_dotenv('variables.env')
+    dotenv.load_dotenv(dotenv_file)
+    my_dict = os.getenv('SUBSCRIBED_REPOS')
+    my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
+    if(len(my_dict) > 0):
+        for repo, commitId in my_dict.items():
+            print("Repo Name : ", repo)
+
     
 
 
@@ -775,12 +788,18 @@ def main():
 
     if args.command == "subscribeRepo":
         res = subscribeToRepo(args.reponame)
-        print(res)
+        #print(res)
 
     ########################## Subscribe related code ######################
 
     if args.command == "getStatus":
         res = getStatus(args.reponame)
+        #print(res)
+
+    ########################## getSubscribedRepos related code ######################
+
+    if args.command == "getSubscribedRepos":
+        res = getSubscribedRepos()
         #print(res)
 
     ##############################################
@@ -1081,6 +1100,11 @@ if __name__ == '__main__':
     getStatus_repo = subparser.add_parser("getStatus", help="Get the status of the repo")
     getStatus_repo.add_argument("--reponame", type = str, required = True, help = "Give the reponame you want to get the status of which you subscribed to ")
 
+    #################################################
+    ## getSubscribedRepos repo commands
+    ##############################################
+    subscribed_repos = subparser.add_parser("getSubscribedRepos", help="Get the list of the subscribed repos")
+
     ############################################################
     ## Create repo related commands
     ############################################################
@@ -1126,7 +1150,7 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    if args.command not in ["createRepo", "search", "subscribeRepo", "getStatus", "list", "downloadRepo", "downloadFile", "readMetadata", "deleteFile", "listContents"]:
+    if args.command not in ["createRepo", "search", "subscribeRepo", "getStatus", "getSubscribedRepos", "list", "downloadRepo", "downloadFile", "readMetadata", "deleteFile", "listContents"]:
         repo_name = args.reponame
         try:
             repo = g.get_repo(repo_name)
