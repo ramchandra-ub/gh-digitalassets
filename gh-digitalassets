@@ -565,7 +565,7 @@ def github_read_file_str(username, repository_name, github_token=None):
         headers['Authorization'] = f"token {github_token}"
         
     try:
-        url = f'https://api.github.com/repos/{username}/{repository_name}/contents/digital-asset-metadata.json'
+        url = f'https://api.github.com/repos/{username}/{repository_name}/contents/metadata.json'
         r = request.get(url, headers={
     'Authorization': 'Bearer '+token,
     'Accept': 'application/vnd.github+json'})
