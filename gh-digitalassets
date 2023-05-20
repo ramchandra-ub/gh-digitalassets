@@ -74,19 +74,6 @@ def topic_writing():
     return(topics)
 
 
-# userinp1 = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
-    # if userinp1 == "Y":
-    #     userinp2 = input("Enter the topic names using comma separation: ")
-    #     inputsplit = userinp2.split(",")
-    #     for topic in inputsplit:
-    #         if topic in topics:
-    #             print("This topic "+topic+" is already added")
-    #             continue
-    #         topics.append(topic)
-    
-    # topics.append("ens-asset")
-    # metaData["topics"] = topics
-
 #metadata file does not exist. Build it interactively.
 def interactiveBuilding():
     metaData = {}
@@ -100,15 +87,7 @@ def interactiveBuilding():
     topics = topic_inp
     print(topics)
     topics.append("ens-asset")
-    # var = any(tag in topics for tag in ensTopicList)
-    # print(var)
-    # if(not var):
-    #     return("Please provide a topic acoording to the ENS standards", 0)
-    # else:
-    #     metaData["topics"] = topics
-
     metaData["topics"] = topics
-
     print("Please provide the associations(URSL's). If multiple, provide then coma separated")
     associations = input().split(',')
     metaData["associations"] = associations
@@ -118,13 +97,14 @@ def interactiveBuilding():
 
 
 
-#if metadata file exists, then check if it according to the metadata standard. Else build it interactively
+#if metadata file exists, then check if it is according to the metadata standards. Else build it interactively
 def metaDataParser(fileContent):
     parsers = ['assetName', 'description', 'topics', 'associations']
     try:
         metaData = json.loads(fileContent or '{}')
     except json.decoder.JSONDecodeError:
         print("Please check the format of your json file")
+        sys.exit()
 
 
     remaining = {}
@@ -214,12 +194,14 @@ def metaDataParser(fileContent):
 
 
 #git upload a metadata file
-def gitUpload(fileContent, file_content):
+def gitUpload(fileContent, file_content, top, desc):
  
     updateFile = repo.get_contents(file_content , ref = 'main')
     repo.update_file(updateFile.path, "updating the file with some changes", fileContent, updateFile.sha, branch = 'main')
+    repo.replace_topics(top)
+    subprocess.run(f"gh repo edit {args.reponame} -d \"{desc}\"",shell=True)
 
-    print("Updated the file in the repo")
+    print("Updated the meta data file in the repo")
 
 #git upload a data file
 def gitUpload_data(fileContent, updateFile):
@@ -228,7 +210,7 @@ def gitUpload_data(fileContent, updateFile):
     
     repo.update_file(file_content.path, "updating the file with some changes", fileContent, file_content.sha, branch = 'main')
 
-    print("Updated the file in the repo")
+    print("Updated the data file in the repo")
 
 
 #updating a metadata file
@@ -239,11 +221,11 @@ def metadata():
             print("No metadata file present. Do you want to interactively build it and upload?")
             resp = input()
             if(resp == 'Y'):
-                uploadFile, flag = interactiveBuilding()
+                uploadFile, flag, top, desc = interactiveBuilding()
                 if(not flag):
                     return(uploadFile, 0)
                 else:
-                    gitUpload(uploadFile, metadata.json)
+                    gitUpload(uploadFile, metadata.json, top, desc)
                     with open(f"{args.filepath}/metadata.json","w") as outfile:
                         outfile.write(uploadFile)
                         
@@ -252,12 +234,12 @@ def metadata():
         else:
             with open(args.filepath + 'metadata.json') as file:
                 fileContent = file.read()
-            var, flag = metaDataParser(fileContent)
+            var, flag, top, desc = metaDataParser(fileContent)
 
             if(flag == 0):
                 return(var, 0)
             else:
-                gitUpload(str(var), 'metadata.json')
+                gitUpload(str(var), 'metadata.json', top, desc)
                 with open(f"{args.filepath}/metadata.json","w") as outfile:
                     outfile.write(var)
                     
@@ -272,11 +254,11 @@ def metadata():
             print("No metadata file present. Do you want to interactively build it and upload?")
             resp = input()
             if(resp == 'Y'):
-                uploadFile, flag = interactiveBuilding()
+                uploadFile, flag, top, desc = interactiveBuilding()
                 if(flag == 0):
                     return(uploadFile, 0)
                 else:
-                    gitUpload(uploadFile, 'metadata.json')
+                    gitUpload(uploadFile, 'metadata.json', top, desc)
                     with open(f"{cwd}metadata.json","w") as outfile:
                         
                         outfile.write(uploadFile)
@@ -284,12 +266,12 @@ def metadata():
         else:
             with open(cwd + 'metadata.json') as file:
                 fileContent = file.read()
-            var, flag = metaDataParser(fileContent)
+            var, flag, top, desc = metaDataParser(fileContent)
 
             if(flag == 0):
                 return(var, 0)
             else:
-                gitUpload(str(var), 'metadata.json')
+                gitUpload(str(var), 'metadata.json', top, desc)
                 with open(f"{cwd}metadata.json","w") as outfile:
                     
                     outfile.write(var)
@@ -370,142 +352,6 @@ def dataFile():
 ##########################################################################
 ## helper commands for create ##
 ##########################################################################
-
-### Metadata Checking and interactive building of missing parts in metadata
-# def metaDataParserCreate(fileContent):
-#     parsers = ['assetName', 'description', 'topics', 'associations']
-#     try:
-#         metaData = json.loads(fileContent)
-#     except:
-#         print("Metadata file is empty. You can use interactive building to build the metadata on the fly. Press Y or N")
-#         userinp = input()
-#         if userinp == "Y":
-#             return interactiveBuildingCreate() 
-#         else:
-#             print("Please change the file and come back.")
-#             sys.exit()
-
-#     remaining = {}
-#     keys = []
-#     counter = 0
-#     topics_bool = True
-#     for tag in parsers:
-#         if(tag in metaData):
-#             if(tag == 'topics'):
-#                 topics_list = metaData['topics']
-#                 ensTopicListLower = [x.lower() for x in ensTopicList]
-#                 var = any(tag in ensTopicListLower for tag in topics_list)
-#                 if(not var):
-#                     print("Please provide a topic according to the ENS standards.")
-#                     topics_bool = False
-#             if(tag == 'associations'):
-#                 if(metaData[tag]):
-#                     if(type(metaData[tag]) != list):
-#                         lst = [metaData[tag]]
-#                         metaData[tag] = lst
-#             if(metaData[tag]):
-#                 pass 
-#                 counter += 1
-#             else:
-#                 print("There is no value provided for the key {}".format(tag))
-#                 remaining[tag] = ""
-#         else:
-#             print("{} key not present in the file".format(tag))
-#             keys.append(tag)
-#     if(counter == 4 and topics_bool == True):
-#         metaData["topics"].append("ens-asset")
-#         metaData["topics"] = list(set(metaData["topics"]))
-#         json_object = json.dumps(metaData, indent = 4)
-#         return(json_object, 1,metaData["topics"],metaData["description"])
-
-#     if(len(remaining) > 0 or len(keys) > 0 or topics_bool == False):
-#         print("Do you want to interactively add the missing keys or values?: Y or N")
-#         resp = input()
-#         if(resp == 'Y'):
-#             if(len(remaining) > 0):
-#                 for tag in remaining:
-#                     if(tag == 'associations'):
-#                         print("Please provide the associations(URL's). If multiple, provide then coma separated")
-#                         associations = input().split(',')
-#                         metaData["associations"] = associations
-#                     else:
-#                         print("Please provide the value of the {}".format(tag))
-#                         resp_tag = input()
-#                         metaData[tag] = resp_tag
-#             if(len(keys) > 0):
-#                 print("Please provide the value for the following keys")
-#                 for tag in keys:
-#                     if(tag == "topics"):
-#                         print("Provide the value of the tag {}".format(tag))
-#                         metaData["topics"] = []
-#                         topic_inp = topic_writing()
-#                         for top in range(len(topic_inp)):
-#                             metaData['topics'].append(topic_inp[top])
-#                     elif(tag == 'associations'):
-#                         print("Please provide the associations(URL's). If multiple, provide then coma separated")
-#                         associations = input().split(',')
-#                         metaData["associations"] = associations
-#                     else:
-#                         print("Provide the value of the tag {}".format(tag))
-#                         resp_tag = input()
-#                         metaData[tag] = resp_tag
-#             if(not topics_bool):
-#                 topic_inp = topic_writing()
-#                 for top in range(len(topic_inp)):
-#                     metaData['topics'].append(topic_inp[top])
-
-#         else:
-#             return("Please change your json file accordingly and re-upload", 0,0,0)
-#     metaData["topics"].append("ens-asset")
-#     metaData["topics"] = list(set(metaData["topics"]))
-#     json_object = json.dumps(metaData, indent = 4)
-#     return(json_object,1,metaData["topics"],metaData["description"])
-
-####################################################################################
-
-### Interactive building if there is no metadata file
-# def interactiveBuildingCreate():
-#     metaData = {}
-#     print("Please provide the asset Name.")
-#     assetName = str(input())
-#     metaData["assetName"] = assetName
-#     print("Please provide a one liner description")
-#     description = str(input())
-#     metaData["description"] = description
-#     topics = []
-#     print("Please select a mandatory topic from below")
-#     questions = [
-#         {
-#         'type': 'list',
-#         'name': 'topic',
-#         'message': 'What topic to add?',
-#         'choices': ["ens-machinelearning", "ens-mathematics", "ens-lifeSciences", "ens-Sports", "ens-others"],
-#         'filter': lambda val: val.lower()
-#         },
-#     ]
-#     answers = prompt(questions)
-#     # print(answers['topic'])
-#     topics.append(answers['topic'])
-
-#     userinp1 = input("You can also add custom topics to this digital asset. Press Y if you want to add new topics to the repo. Otherwise press N: ")
-#     if userinp1 == "Y":
-#         userinp2 = input("Enter the topic names using comma separation: ")
-#         inputsplit = userinp2.split(",")
-#         for topic in inputsplit:
-#             if topic in topics:
-#                 print("This topic "+topic+" is already added")
-#                 continue
-#             topics.append(topic)
-    
-#     topics.append("ens-asset")
-#     metaData["topics"] = topics
-
-#     print("Please provide the associations(URSL's). If multiple, provide by giving space")
-#     associations = input().split()
-#     metaData["associations"] = associations
-
-#     json_object = json.dumps(metaData, indent = 4)
-#     return(json_object,1,metaData["topics"],metaData["description"])
 
 #####################################################################################
 
@@ -592,13 +438,13 @@ def download_repo(type,repo,chunkSize = 128):
     if response.status_code == 404:
         print("Failed to fetch download file")
     else :
-        print("Downloading %s File",type)
+        print("Downloading {} File".format(type))
         res = request.get(archive_link , stream = True)
         with open(repoName+"."+type,'wb')  as f:
             for chunk in res.iter_content(chunk_size = chunkSize):
                 if chunk:
                     f.write(chunk)
-        print("Download Successful")
+        print("Downloaded Successfully")
 
 def download_files(files):
     response = request.get(files.download_url, allow_redirects=True)
@@ -630,15 +476,8 @@ def searchfiles(repoN,filename):
         else:
             if newContent.name == filename and newContent.type != 'dir':
                 exactlist.append(newContent)
-                # response = request.get(newContent.download_url, allow_redirects=True)
-                # open(newContent.name,'wb').write(response.content)
-                # print("Download Successful :" + newContent.name)
-                # sys.exit()
             elif fuzz.partial_ratio(newContent.name.lower(), filename.lower()) >= 80 and newContent.type != 'dir':
                 partiallist.append(newContent)
-                # response = request.get(newContent.download_url, allow_redirects=True)
-                # open(newContent.name,'wb').write(response.content)
-                # print("Download Successful :" + newContent.name)
     if(len(exactlist) == 1):
         download_files(exactlist[0])
     elif(len(exactlist) > 1):
@@ -958,10 +797,6 @@ def main():
             createdRepoName = createasset(args.reponame)
             print("Empty repo created. Upload the digital asset files.")
         else:
-            # createdRepo = user.create_repo(args.reponame)
-            
-            # createdRepoName = g.get_repo(createdRepo.full_name)
-
             ## if no path is given, take current directory and proceed
             if args.path is None:
                 print("Files must be uploaded when creating a non-empty repo")
@@ -1016,7 +851,7 @@ def main():
                     ###################
                     ## add the desc to the repo
                     ###################
-                    subprocess.run(f"gh repo edit {createdRepoName.full_name} -d {descFunc}",shell=True)
+                    subprocess.run(f"gh repo edit {createdRepoName.full_name} -d \"{descFunc}\"",shell=True)
                     ### Below two lines were used in previous implementation. Not needed
                     # addTopicsCreation(createdRepoName)
                     # addDesc(createdRepoName)
@@ -1078,7 +913,7 @@ def main():
                 ###################
                 ## add the desc to the repo
                 ###################
-                subprocess.run(f"gh repo edit {createdRepoName.full_name} -d {descFunc}",shell=True)
+                subprocess.run(f"gh repo edit {createdRepoName.full_name} -d \"{descFunc}\"",shell=True)
                 ### Below two lines were used in previous implementation. Not needed
                 # addTopicsCreation(createdRepoName)
                 # addDesc(createdRepoName)
@@ -1186,7 +1021,7 @@ def main():
             print("User Token Invalid")
             sys.exit()
         except github.UnknownObjectException :
-            print("File doesn't exist.")
+            print("Invalid User. User doesn't have access to delete the file")
             sys.exit()
         except github.GithubException as e:
             print("Error Occured:", e)
@@ -1298,14 +1133,9 @@ if __name__ == '__main__':
         except GithubException as e:
             if e.status == 404:
                 print("Repository not found. Go ahead and create it")
-                # sys.exit()
     else:
         pass
 
-
-    #file_content = repo.get_contents(args.updateFile , ref = 'main')
-
     ensTopicList = ["ens-machinelearning", "ens-mathematics", "ens-lifesciences", "ens-sports", "ens-others"]
-   #  args = parser.parse_args()
 
     main()
