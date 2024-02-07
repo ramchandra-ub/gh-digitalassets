@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #set -e
 
 
@@ -675,7 +675,7 @@ def subscribeToRepo(reponame):
     my_dict = os.getenv('SUBSCRIBED_REPOS')
     my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
     if(reponame in my_dict):
-        print("It seems like you have already subscribed to this repo.")
+        return("It seems like you have already subscribed to this repo.")
     else:
         try:
             repo = g.get_repo(reponame)
@@ -683,13 +683,11 @@ def subscribeToRepo(reponame):
             repo_name = reponame[reponame.index('/')+1:]
             repo_status = subprocess.run("gh api https://api.github.com/repos/{}/{}/commits/main".format(username, repo_name), shell=True, capture_output=True)
             repo_status = json.loads(repo_status.stdout)
-            if(len(repo_status['files']) > 0):
-                my_dict[reponame] = repo_status['files'][0]['sha']
-            else:
-                my_dict[reponame] = ''
+            my_dict[reponame] = repo_status['files'][0]['sha']
             dotenv.set_key(dotenv_file, "SUBSCRIBED_REPOS", str(my_dict))
-            print("Success. Subscribed to this repo")
+            return("Success. Subscribed to this repo")
         except GithubException as e:
+            print(e)
             if e.status == 404:
                 print("Repository not found. Please enter a correct reponame")
         
@@ -730,20 +728,98 @@ def getStatus(reponame):
 
     else:
         print("Please subscribe to this repo first")
-
-#to get the list of subscribed repos
-def getSubscribedRepos():
-    dotenv_file = dotenv.find_dotenv('variables.env')
-    dotenv.load_dotenv(dotenv_file)
-    my_dict = os.getenv('SUBSCRIBED_REPOS')
-    my_dict = json.loads(my_dict.replace("'", "\""), strict = False)
-    if(len(my_dict) > 0):
-        for repo, commitId in my_dict.items():
-            print("Repo Name : ", repo)
-
     
 
+# Repo updates tracking
+        
+def reset_tracking(filename):
+    if (filename == None):
+        print('Provide a filename')
+        return('Provide a filename')
+    try:
+        with open(filename, 'r') as f:
+            repos = f.read().splitlines()
+        shas = []
+        print(repos)
+    except Exception as e:
+     print('Error: File not found',e)
+    for repo in repos:
+        url = f'https://api.github.com/repos/{repo}/commits'
+        response = request.get(url,headers={
+         'Authorization': 'Bearer '+token,
+         'Accept': 'application/vnd.github+json'})
 
+        response = response.json()
+        sha = response[0]['sha']
+        
+        shas.append((repo, sha))
+
+    filename = filename.split('.')[0]
+
+    with open(filename+'_sha_list.txt', 'w') as f:
+            for repo, sha in shas:
+                f.write(f'{repo}: {sha}\n')
+    print('The SHA list file {} has been created.'.format(filename))
+
+def print_changes(full_name):
+    url_2 = " https://api.github.com/repos/{}/commits".format(full_name)
+    data = request.get(url_2,headers={
+         'Authorization': 'Bearer '+token,
+         'Accept': 'application/vnd.github+json'})
+    repo_status  = data.json()
+
+    latest_commit = repo_status[0]['commit']['url']
+    committer_name = repo_status[0]['commit']['committer']['name']
+    committer_email = repo_status[0]['commit']['committer']['email']
+    commit_date = repo_status[0]['commit']['committer']['date']
+    commit_message = repo_status[0]['commit']['message']
+
+    
+    print('Latest commit: ',latest_commit)
+    print('Commit By: ',committer_name,committer_email)
+    print('Commit Date: ', commit_date)
+    print('Commit Message: ',commit_message)
+    
+def get_changes(filename):
+    if (filename == None):
+        print('Provide a filename')
+        return('Provide a filename')
+    with open(filename, 'r') as f:
+        repos = f.read().splitlines()
+
+# Retrieve the SHA for each repository's master branch
+    shas = []
+    for repo in repos:
+        url = f'https://api.github.com/repos/{repo}/commits'
+        response = request.get(url,headers={
+         'Authorization': 'Bearer '+token,
+         'Accept': 'application/vnd.github+json'})
+        response = response.json()
+        sha = response[0]['sha']
+        shas.append((repo, sha))
+
+# Check if the SHA list file exists
+    filename = filename.split('.')[0]
+
+    if os.path.isfile(filename+'_sha_list.txt'):
+        with open(filename+'_sha_list.txt', 'r') as f:
+            old_shas = f.read().splitlines()
+        # Compare the new SHA list with the old SHA list
+        change = False
+        for repo, sha in shas:
+            if f'{repo}: {sha}' not in old_shas:
+                print(f'There is a new commit in {repo} with SHA {sha}.')
+                print_changes(repo)
+                change = True
+        if not change:
+            print("No new changes/updates available")
+    
+    else:
+        # Write the SHA list to a file
+        with open(filename+'_sha_list.txt', 'w') as f:
+            for repo, sha in shas:
+                f.write(f'{repo}: {sha}\n')
+        print('The SHA list file has been created, did not find existing SHA file')
 
          
          
@@ -788,18 +864,12 @@ def main():
 
     if args.command == "subscribeRepo":
         res = subscribeToRepo(args.reponame)
-        #print(res)
+        print(res)
 
     ########################## Subscribe related code ######################
 
     if args.command == "getStatus":
         res = getStatus(args.reponame)
-        #print(res)
-
-    ########################## getSubscribedRepos related code ######################
-
-    if args.command == "getSubscribedRepos":
-        res = getSubscribedRepos()
         #print(res)
 
     ##############################################
@@ -1051,6 +1121,71 @@ def main():
             list_assets("topics")
         except Exception as e:
             print(e)
+    
+    elif args.command == "listSubscribedRepos":
+        try:
+              
+
+            url = 'https://api.github.com/user/subscriptions?per_page=100'
+
+            data = request.get(url,headers={
+                'Authorization': 'Bearer '+token,
+                'Accept': 'application/vnd.github+json'})
+            data_json  = data.json()
+
+            headers = data.headers
+            user_name = user.login
+            # print(user.login)
+
+            count = 0
+            for i in range(0,len(data_json)):
+                    owner = data_json[i]['owner']['login']
+                    if user_name != owner:
+                        count += 1
+                        print(count)
+                        name = data_json[i]['name']
+                        url = data_json[i]['html_url']
+                        updated_at = data_json[i]['updated_at']
+                        full_name = data_json[i]['full_name']
+                        url_2 = " https://api.github.com/repos/{}/commits".format(full_name)
+                        data = request.get(url_2)
+                        repo_status  = data.json()
+         
+                        latest_commit = repo_status[0]['commit']['url']
+                        committer_name = repo_status[0]['commit']['committer']['name']
+                        committer_email = repo_status[0]['commit']['committer']['email']
+                        commit_date = repo_status[0]['commit']['committer']['date']
+                        commit_message = repo_status[0]['commit']['message']
+   
+                        
+                        print('Latest commit: ',latest_commit)
+                        print('Commit By: ',committer_name,committer_email)
+                        print('Commit Date: ', commit_date)
+                        print('Commit Message: ',commit_message)
+                        print('Name: ' + name,'\nURL: ' + url, '\nUploaded By: ' + owner + '\nUpdated At: ' + updated_at + '\n' )
+
+        except Exception as e:
+            print(e)
+    
+    if args.command == 'trackRepos':
+        try:
+            reset_tracking(args.filename)
+        except Exception as e:
+            print(e)
+    
+    if args.command == 'getChanges':
+        try:
+            get_changes(args.filename)
+        except Exception as e:
+            print(e)
+
+
+    if args.command == 'resetTracking':
+        try:
+            reset_tracking(args.filename)
+        except Exception as e:
+            print(e)
+
 
     if args.command == "search":
         try:
@@ -1093,17 +1228,25 @@ if __name__ == '__main__':
     ##############################################
     subscribe_repo = subparser.add_parser("subscribeRepo", help="Subscribe to a repo to get updates on the repo")
     subscribe_repo.add_argument("--reponame", type = str, required = True, help = "Give the reponame to which you want to subscribe")
+    
+    # list_command = subparser.add_parser("list",help = "List all the digital assets")
+    listsub = subparser.add_parser("listSubscribedRepos",help = "List all the subscribed repos")
+
+    trackRepos = subparser.add_parser('trackRepos',help="Specify the repos to be tracked in the repo_list.txt file")
+    trackRepos.add_argument("--filename",type=str,required=False,help= "Provide a filename with the repo list")
+
+    getChanges = subparser.add_parser('getChanges',help="Tracks the changes")
+    getChanges.add_argument("--filename",type=str,required=False,help= "Provide a filename with the repo list")
+
+    resetTracking = subparser.add_parser('resetTracking',help="Resets the tracking, after the chnges are verified")
+    resetTracking.add_argument("--filename",type=str,required=False,help= "Provide a filename with the repo list")
+
 
     #################################################
     ## getStatus repo commands
     ##############################################
     getStatus_repo = subparser.add_parser("getStatus", help="Get the status of the repo")
     getStatus_repo.add_argument("--reponame", type = str, required = True, help = "Give the reponame you want to get the status of which you subscribed to ")
-
-    #################################################
-    ## getSubscribedRepos repo commands
-    ##############################################
-    subscribed_repos = subparser.add_parser("getSubscribedRepos", help="Get the list of the subscribed repos")
 
     ############################################################
     ## Create repo related commands
@@ -1150,7 +1293,8 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    if args.command not in ["createRepo", "search", "subscribeRepo", "getStatus", "getSubscribedRepos", "list", "downloadRepo", "downloadFile", "readMetadata", "deleteFile", "listContents"]:
+    if args.command not in ["createRepo", "search", "subscribeRepo", "getStatus", "list", "downloadRepo", "downloadFile", "readMetadata", "deleteFile",
+                             "listContents", "listSubscribedRepos", "trackRepos", "getChanges", "resetTracking"]:
         repo_name = args.reponame
         try:
             repo = g.get_repo(repo_name)
